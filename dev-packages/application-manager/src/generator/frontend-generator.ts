@@ -15,6 +15,7 @@
  ********************************************************************************/
 
 import { AbstractGenerator } from "./abstract-generator";
+import { generateIndexHtml } from './index-html-generator';
 
 export class FrontendGenerator extends AbstractGenerator {
 
@@ -28,18 +29,7 @@ export class FrontendGenerator extends AbstractGenerator {
     }
 
     protected compileIndexHtml(frontendModules: Map<string, string>): string {
-        return `<!DOCTYPE html>
-<html>
-
-<head>${this.compileIndexHead(frontendModules)}
-  <script type="text/javascript" src="./bundle.js" charset="utf-8"></script>
-</head>
-
-<body>
-  <div class="theia-preload"></div>
-</body>
-
-</html>`;
+        return generateIndexHtml(this.compileIndexHead(frontendModules));
     }
 
     protected compileIndexHead(frontendModules: Map<string, string>): string {
@@ -69,12 +59,33 @@ function load(raw) {
     )
 }
 
+function login() {
+    return new Promise(function(resolve, reject) {
+        document.getElementById("login-form").onsubmit = function(event) {
+            event.preventDefault();
+
+            const theiaPreloadDiv = document.createElement('div');
+
+            theiaPreloadDiv.classList.add("theia-preload");
+            document.body.appendChild(theiaPreloadDiv);
+            document.getElementById('login-container').remove();
+
+            resolve("Done a login");
+        }
+    });
+}
+
+function start() {
+    const application = container.get(FrontendApplication);
+    login().then(() => application.start());
+}
+
 function start() {
     const themeService = ThemeService.get()
     themeService.loadUserTheme();
 
     const application = container.get(FrontendApplication);
-    application.start();
+    login().then(() => application.start());
 }
 
 module.exports = Promise.resolve()${this.compileFrontendModuleImports(frontendModules)}
