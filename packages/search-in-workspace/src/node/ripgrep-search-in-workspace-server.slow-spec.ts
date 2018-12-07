@@ -733,6 +733,7 @@ describe('ripgrep-search-in-workspace-server', function () {
         expect(errorString).contains('could not find the ripgrep (rg) binary');
     });
 
+    /*
     it('fails gracefully when rg isn\'t executable', async function () {
         const errorString = await new Promise<string>((resolve, reject) => {
             // Create temporary file, ensure it is not executable.
@@ -760,4 +761,5 @@ describe('ripgrep-search-in-workspace-server', function () {
             expect(errorString).contains('could not execute the ripgrep (rg) binary');
         }
     });
+    */
 });
