@@ -166,7 +166,8 @@ if (isMaster) {
                 height: windowState.height,
                 x: windowState.x,
                 y: windowState.y,
-                isMaximized: windowState.isMaximized
+                isMaximized: windowState.isMaximized,
+                webPreferences: { devTools: ${this.hasDevTools} }
             };
 
             // Always hide the window, we will show the window when it is ready to be shown in any case.
