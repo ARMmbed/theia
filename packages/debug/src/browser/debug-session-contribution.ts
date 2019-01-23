@@ -25,10 +25,14 @@ import { BreakpointManager } from './breakpoint/breakpoint-manager';
 import { DebugSessionOptions } from './debug-session-options';
 import { OutputChannelManager, OutputChannel } from '@theia/output/lib/common/output-channel';
 import { DebugPreferences } from './debug-preferences';
+<<<<<<< electron-master-extension-fixed
 import { DebugSessionConnection } from './debug-session-connection';
 import { IWebSocket } from 'vscode-ws-jsonrpc/lib/socket/socket';
 import { DebugAdapterPath } from '../common/debug-service';
 import { ContributionProvider } from '@theia/core/lib/common/contribution-provider';
+=======
+import { FileSystem } from '@theia/filesystem/lib/common';
+>>>>>>> release-0.3.18
 
 /**
  * DebugSessionContribution symbol for DI.
@@ -112,6 +116,14 @@ export class DefaultDebugSessionFactory implements DebugSessionFactory {
     @inject(DebugPreferences)
     protected readonly debugPreferences: DebugPreferences;
 
+<<<<<<< electron-master-extension-fixed
+=======
+    @inject(FileSystem)
+    protected readonly fileSystem: FileSystem;
+
+    protected traceOutputChannel: OutputChannel | undefined;
+
+>>>>>>> release-0.3.18
     get(sessionId: string, options: DebugSessionOptions): DebugSession {
         const connection = new DebugSessionConnection(
             sessionId,
@@ -130,6 +142,7 @@ export class DefaultDebugSessionFactory implements DebugSessionFactory {
             this.editorManager,
             this.breakpoints,
             this.labelProvider,
+<<<<<<< electron-master-extension-fixed
             this.messages);
     }
 
@@ -137,5 +150,11 @@ export class DefaultDebugSessionFactory implements DebugSessionFactory {
         if (this.debugPreferences['debug.trace']) {
             return this.outputChannelManager.getChannel('Debug adapters');
         }
+=======
+            this.messages,
+            traceOutputChannel,
+            this.fileSystem
+        );
+>>>>>>> release-0.3.18
     }
 }
