@@ -20,7 +20,6 @@ import { dirname } from 'path';
 import { pathExists } from 'fs-extra';
 import { ILogger } from '@theia/core/lib/common/logger';
 import { Disposable, DisposableCollection } from '@theia/core/lib/common/disposable';
-import { MessageService } from '@theia/core';
 
 /**
  * Initializer hook for Git.
@@ -48,9 +47,6 @@ export class DefaultGitInit implements GitInit {
     @inject(ILogger)
     protected readonly logger: ILogger;
 
-    @inject(MessageService)
-    protected readonly messages: MessageService;
-
     async init(): Promise<void> {
         const { env } = process;
         try {
@@ -63,12 +59,12 @@ export class DefaultGitInit implements GitInit {
                 if (execPathOk && pathOk && dirOk) {
                     if (typeof env.LOCAL_GIT_DIRECTORY !== 'undefined' && env.LOCAL_GIT_DIRECTORY !== dir) {
                         this.logger.error(`Misconfigured env.LOCAL_GIT_DIRECTORY: ${env.LOCAL_GIT_DIRECTORY}. dir was: ${dir}`);
-                        this.messages.error('The LOCAL_GIT_DIRECTORY env variable was already set to a different value.', { timeout: 0 });
+                        this.logger.error('The LOCAL_GIT_DIRECTORY env variable was already set to a different value.', { timeout: 0 });
                         return;
                     }
                     if (typeof env.GIT_EXEC_PATH !== 'undefined' && env.GIT_EXEC_PATH !== execPath) {
                         this.logger.error(`Misconfigured env.GIT_EXEC_PATH: ${env.GIT_EXEC_PATH}. execPath was: ${execPath}`);
-                        this.messages.error('The GIT_EXEC_PATH env variable was already set to a different value.', { timeout: 0 });
+                        this.logger.error('The GIT_EXEC_PATH env variable was already set to a different value.', { timeout: 0 });
                         return;
                     }
                     process.env.LOCAL_GIT_DIRECTORY = dir;
@@ -77,15 +73,23 @@ export class DefaultGitInit implements GitInit {
                     return;
                 }
             }
-            this.messages.error('Could not find Git on the PATH.', { timeout: 0 });
+            this.logger.error('Could not find Git on the PATH.', { timeout: 0 });
         } catch (err) {
             this.logger.error(err);
-            this.messages.error('An unexpected error occurred when locating the Git executable.', { timeout: 0 });
+            this.logger.error('An unexpected error occurred when locating the Git executable.', { timeout: 0 });
         }
     }
 
     dispose(): void {
         this.toDispose.dispose();
+    }
+
+    // tslint:disable-next-line:no-any
+    protected async handleExternalNotFound(err?: any): Promise<void> {
+        if (err) {
+            this.logger.error(err);
+        }
+        this.logger.info('Could not find Git on the PATH. Falling back to the embedded Git.');
     }
 
 }
