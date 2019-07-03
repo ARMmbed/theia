@@ -177,7 +177,9 @@ if (isMaster) {
                     windows.splice(index, 1);
                 }
                 if (windows.length === 0) {
+                    newWindow = null;
                     app.exit(0);
+                    app.quit();
                 }
             });
             return newWindow;
