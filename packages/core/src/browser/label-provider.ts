@@ -20,6 +20,7 @@ import URI from '../common/uri';
 import { ContributionProvider } from '../common/contribution-provider';
 import { Prioritizeable, MaybePromise } from '../common/types';
 import { Event, Emitter } from '../common';
+import { FrontendApplicationContribution } from './frontend-application';
 
 export const FOLDER_ICON = 'fa fa-folder';
 export const FILE_ICON = 'fa fa-file';
@@ -98,7 +99,7 @@ export class DefaultUriLabelProviderContribution implements LabelProviderContrib
 }
 
 @injectable()
-export class LabelProvider {
+export class LabelProvider implements FrontendApplicationContribution {
 
     protected readonly onDidChangeEmitter = new Emitter<DidChangeLabelEvent>();
 
@@ -106,6 +107,9 @@ export class LabelProvider {
         @inject(ContributionProvider) @named(LabelProviderContribution)
         protected readonly contributionProvider: ContributionProvider<LabelProviderContribution>
     ) {
+    }
+
+    public initialize(): void {
         const contributions = this.contributionProvider.getContributions();
         for (const contribution of contributions) {
             if (contribution.onDidChange) {
