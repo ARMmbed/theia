@@ -109,6 +109,10 @@ export interface FrontendApplicationConfig extends ApplicationConfig {
      */
     readonly applicationName: string;
 
+    /**
+     * The local storage key to use for the application. `theia` by default.
+     */
+    readonly storageKey?: string;
 }
 
 /**

@@ -18,6 +18,7 @@ import { inject, injectable, postConstruct } from 'inversify';
 import { ILogger } from '../common/logger';
 import { MessageService } from '../common/message-service';
 import { WindowService } from './window/window-service';
+import { FrontendApplicationConfigProvider } from './frontend-application-config-provider';
 
 export const StorageService = Symbol('IStorageService');
 /**
@@ -45,6 +46,7 @@ interface LocalStorage {
 @injectable()
 export class LocalStorageService implements StorageService {
     private storage: LocalStorage;
+    private storageKey: string;
 
     @inject(ILogger) protected logger: ILogger;
     @inject(MessageService) protected readonly messageService: MessageService;
@@ -52,6 +54,7 @@ export class LocalStorageService implements StorageService {
 
     @postConstruct()
     protected init(): void {
+        this.storageKey = FrontendApplicationConfigProvider.get().storageKey || 'theia';
         if (typeof window !== 'undefined' && window.localStorage) {
             this.storage = window.localStorage;
             this.testLocalStorage();
@@ -84,7 +87,7 @@ export class LocalStorageService implements StorageService {
 
     protected prefix(key: string): string {
         const pathname = typeof window === 'undefined' ? '' : window.location.pathname;
-        return `theia:${pathname}:${key}`;
+        return `${this.storageKey}:${pathname}:${key}`;
     }
 
     private async showDiskQuotaExceededMessage(): Promise<void> {

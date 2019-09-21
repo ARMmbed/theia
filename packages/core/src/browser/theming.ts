@@ -43,6 +43,7 @@ export interface ThemeChangeEvent {
 
 export class ThemeService {
 
+    private storageKey: string;
     private themes: { [id: string]: Theme } = {};
     private activeTheme: Theme | undefined;
     private readonly themeChange = new Emitter<ThemeChangeEvent>();
@@ -58,6 +59,7 @@ export class ThemeService {
         protected _defaultTheme: string | undefined = FrontendApplicationConfigProvider.get().defaultTheme,
         protected fallbackTheme: string = 'dark'
     ) {
+        this.storageKey = FrontendApplicationConfigProvider.get().storageKey || 'theia';
         const global = window as any; // tslint:disable-line
         global[ThemeServiceSymbol] = this;
     }
@@ -103,14 +105,14 @@ export class ThemeService {
         }
         newTheme.activate();
         this.activeTheme = newTheme;
-        window.localStorage.setItem('theme', themeId);
+        window.localStorage.setItem(`${this.storageKey}:theme`, themeId);
         this.themeChange.fire({
             newTheme, oldTheme
         });
     }
 
     getCurrentTheme(): Theme {
-        const themeId = window.localStorage.getItem('theme') || this.defaultTheme.id;
+        const themeId = window.localStorage.getItem(`${this.storageKey}:theme`) || this.defaultTheme.id;
         return this.getTheme(themeId);
     }
 
