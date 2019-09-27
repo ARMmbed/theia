@@ -16,10 +16,11 @@
 
 import { injectable } from 'inversify';
 import { ipcRenderer } from 'electron';
-import { WindowService, NewWindowOptions } from '../../browser/window/window-service';
+import { NewWindowOptions } from '../../browser/window/window-service';
+import { DefaultWindowService } from '../../browser/window/default-window-service';
 
 @injectable()
-export class ElectronWindowService implements WindowService {
+export class ElectronWindowService extends DefaultWindowService {
 
     openNewWindow(url: string, { external }: NewWindowOptions = {}): undefined {
         if (external) {
@@ -28,6 +29,11 @@ export class ElectronWindowService implements WindowService {
             ipcRenderer.send('create-new-window', url);
         }
         return undefined;
+    }
+
+    protected preventUnload(event: BeforeUnloadEvent): string | void {
+        // The user will be shown a confirmation dialog by the will-prevent-unload handler in the Electron main script
+        event.returnValue = false;
     }
 
 }

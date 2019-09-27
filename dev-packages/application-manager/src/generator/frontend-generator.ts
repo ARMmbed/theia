@@ -125,7 +125,7 @@ process.env.LC_NUMERIC = 'C';
 const electron = require('electron');
 const { join, resolve } = require('path');
 const { fork } = require('child_process');
-const { app, shell, BrowserWindow, ipcMain, Menu } = electron;
+const { app, dialog, shell, BrowserWindow, ipcMain, Menu } = electron;
 
 const applicationName = \`${this.pck.props.frontend.config.applicationName}\`;
 
@@ -213,6 +213,20 @@ app.on('ready', () => {
         newWindow.on('close', saveWindowState);
         newWindow.on('resize', saveWindowStateDelayed);
         newWindow.on('move', saveWindowStateDelayed);
+
+        newWindow.webContents.on('will-prevent-unload', event => {
+            const preventStop = 0 !== dialog.showMessageBox(newWindow, {
+                type: 'question',
+                buttons: ['Yes', 'No'],
+                title: 'Confirm',
+                message: 'Are you sure you want to quit?',
+                detail: 'Any unsaved changes will not be saved.'
+            });
+
+            if (!preventStop) {
+                event.preventDefault();
+            }
+        });
 
         // Notify the renderer process on keyboard layout change
         nativeKeymap.onDidChangeKeyboardLayout(() => {
