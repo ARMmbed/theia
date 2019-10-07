@@ -195,11 +195,10 @@ export namespace Repository {
     export function is(repository: Object | undefined): repository is Repository {
         return !!repository && 'localUri' in repository;
     }
-    export function relativePath(repository: Repository | URI | string, uri: URI | string): Path | undefined {
+    export function relativePath(repository: Repository | URI, uri: URI | string): Path | undefined {
         const repositoryUri = new URI(Repository.is(repository) ? repository.localUri : String(repository));
         return repositoryUri.relative(new URI(String(uri)));
     }
-    export const sortComparator = (ra: Repository, rb: Repository) => rb.localUri.length - ra.localUri.length;
 }
 
 /**

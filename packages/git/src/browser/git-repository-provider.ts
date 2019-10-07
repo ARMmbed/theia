@@ -21,13 +21,13 @@ import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service
 import { FileSystem } from '@theia/filesystem/lib/common';
 import { Emitter, Event } from '@theia/core/lib/common/event';
 import { StorageService } from '@theia/core/lib/browser/storage-service';
-import URI from '@theia/core/lib/common/uri';
 import { FileSystemWatcher } from '@theia/filesystem/lib/browser/filesystem-watcher';
 import { Git, Repository } from '../common';
 import { GitCommitMessageValidator } from './git-commit-message-validator';
 import { GitScmProvider } from './git-scm-provider';
 import { ScmService } from '@theia/scm/lib/browser/scm-service';
 import { ScmRepository } from '@theia/scm/lib/browser/scm-repository';
+// import { ScmProvider } from '@theia/scm/lib/browser/scm-provider';
 
 export interface GitRefreshOptions {
     readonly maxCount: number
@@ -40,8 +40,8 @@ export class GitRepositoryProvider {
     protected readonly selectedRepoStorageKey = 'theia-git-selected-repository';
     protected readonly allRepoStorageKey = 'theia-git-all-repositories';
 
-    @inject(GitScmProvider.Factory)
-    protected readonly scmProviderFactory: GitScmProvider.Factory;
+    @inject(GitScmProvider.ContainerFactory)
+    protected readonly scmProviderFactory: GitScmProvider.ContainerFactory;
 
     @inject(GitCommitMessageValidator)
     protected readonly commitMessageValidator: GitCommitMessageValidator;
@@ -123,29 +123,6 @@ export class GitRepositoryProvider {
         return repositories;
     }
 
-    findRepository(uri: URI): Repository | undefined {
-        const reposSorted = this.allRepositories.sort(Repository.sortComparator);
-        return reposSorted.find(repo => new URI(repo.localUri).isEqualOrParent(uri));
-    }
-
-    findRepositoryOrSelected(arg: URI | string | { uri?: string | URI } | undefined): Repository | undefined {
-        let uri: URI | string | undefined;
-        if (arg) {
-            if (arg instanceof URI || typeof arg === 'string') {
-                uri = arg;
-            } else if (typeof arg === 'object' && 'uri' in arg && arg.uri) {
-                uri = arg.uri;
-            }
-            if (uri) {
-                if (typeof uri === 'string') {
-                    uri = new URI(uri);
-                }
-                return this.findRepository(uri);
-            }
-        }
-        return this.selectedRepository;
-    }
-
     async refresh(options?: GitRefreshOptions): Promise<void> {
         const repositories: Repository[] = [];
         const refreshing: Promise<void>[] = [];
@@ -186,7 +163,8 @@ export class GitRepositoryProvider {
     }
 
     protected registerScmProvider(repository: Repository): void {
-        const provider = this.scmProviderFactory({ repository });
+        const providerContainer = this.scmProviderFactory({ repository });
+        const provider = providerContainer.get(GitScmProvider);
         this.scmService.registerScmProvider(provider, {
             input: {
                 placeholder: 'Message (press {0} to commit)',
@@ -196,7 +174,8 @@ export class GitRepositoryProvider {
                         message: issue.message,
                         type: issue.status
                     };
-                }
+                },
+                providerContainer
             }
         });
     }

@@ -21,6 +21,7 @@ export interface GitFileChangeNode extends GitFileChange {
     readonly label: string;
     readonly description: string;
     readonly caption?: string;
+    readonly statusCaptionAsThoughStaged?: string;
     readonly extraIconClassName?: string;
     readonly commitSha?: string;
     selected?: boolean;

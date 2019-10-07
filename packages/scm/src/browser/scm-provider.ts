@@ -35,6 +35,45 @@ export interface ScmProvider extends Disposable {
     readonly amendSupport?: ScmAmendSupport;
 }
 
+/**
+ * Range that is used for representing to individual commitish when calculating either `git log` or `git diff`.
+ */
+export interface Range {
+
+    /**
+     * The last revision that should be included among the result running this query. Here, the revision can be a tag, a commitish,
+     * or even an expression (`HEAD~3`). For more details to specify the revision, see [here](https://git-scm.com/docs/gitrevisions#_specifying_revisions).
+     */
+    readonly toRevision?: string;
+
+    /**
+     * Either the from revision (`string`) or a positive integer that is equivalent to the `~` suffix, which means the commit object that is the `fromRevision`<sup>th</sup>
+     * generation ancestor of the named, `toRevision` commit object, following only the first parents. If not specified, equivalent to `origin..toRevision`.
+     */
+    readonly fromRevision?: number | string;
+
+}
+
+// TODO is this the right place for this? - Nigel
+// and range is SCM specific???
+export interface HistoryWidgetOptions {
+    /**
+     * The Git revision range that will be used when calculating the diff.
+     */
+    readonly range?: Range;
+
+    /**
+     * The URI of the resource in the repository to get the diff. Can be an individual file or a directory.
+     */
+    readonly uri?: string;
+
+    /**
+     * Limits the number of commits. Also known as `-n` or `--number. If not specified, or not a positive integer, then will be ignored, and the returning list
+     * of commits will not be limited.
+     */
+    readonly maxCount?: number;
+}
+
 export interface ScmResourceGroup extends Disposable {
     readonly id: string;
     readonly label: string;
@@ -68,11 +107,28 @@ export interface ScmCommand {
 }
 
 export interface ScmCommit {
-    id: string,  // eg Git sha or Mercurial revision number
-    summary: string,
-    authorName: string,
-    authorEmail: string,
-    authorDateRelative: string
+    id: string;  // eg Git sha or Mercurial revision number
+    commitDetailUri: URI;
+    summary: string;
+    messageBody?: string;
+    authorName: string;
+    authorEmail: string;
+    /**
+     * The date of the commit in ISO format.
+     */
+    authorTimestamp: string;
+    authorDateRelative: string;
+    fileChanges: ScmFileChange[];
+}
+
+export interface ScmFileChange {
+    uri: string;
+    getCaption(): string;
+    getStatusCaption(): string;
+    getStatusCaptionAsThoughStaged(): string;
+    getStatusAbbreviation(): string;
+    getClassNameForStatus(): string;
+    getUriToOpen(): URI;
 }
 
 export interface ScmAmendSupport {

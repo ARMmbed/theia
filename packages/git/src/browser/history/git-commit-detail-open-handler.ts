@@ -17,13 +17,12 @@
 import { injectable } from 'inversify';
 import { WidgetOpenHandler, WidgetOpenerOptions } from '@theia/core/lib/browser';
 import URI from '@theia/core/lib/common/uri';
-import { GIT_COMMIT_DETAIL, GitCommitDetailWidgetOptions, GitCommitDetailWidget, GitCommitDetails } from './git-commit-detail-widget';
+import { GitCommitDetailWidgetOptions, GitCommitDetailWidget } from './git-commit-detail-widget';
+import { GitScmProvider } from '../git-scm-provider';
+import { ScmCommit } from '@theia/scm/lib/browser/scm-provider';
 
 export namespace GitCommitDetailUri {
-    export const scheme = GIT_COMMIT_DETAIL;
-    export function toUri(commitSha: string): URI {
-        return new URI('').withScheme(scheme).withFragment(commitSha);
-    }
+    export const scheme = GitScmProvider.GIT_COMMIT_DETAIL;
     export function toCommitSha(uri: URI): string {
         if (uri.scheme === scheme) {
             return uri.fragment;
@@ -36,7 +35,7 @@ export type GitCommitDetailOpenerOptions = WidgetOpenerOptions & GitCommitDetail
 
 @injectable()
 export class GitCommitDetailOpenHandler extends WidgetOpenHandler<GitCommitDetailWidget> {
-    readonly id = GIT_COMMIT_DETAIL;
+    readonly id = GitScmProvider.GIT_COMMIT_DETAIL;
 
     canHandle(uri: URI): number {
         try {
@@ -48,7 +47,12 @@ export class GitCommitDetailOpenHandler extends WidgetOpenHandler<GitCommitDetai
     }
 
     protected async doOpen(widget: GitCommitDetailWidget, options: GitCommitDetailOpenerOptions): Promise<void> {
-        widget.setContent({ range: options.range });
+        widget.setContent({
+            range: {
+                fromRevision: options.sha + '~1',
+                toRevision: options.sha
+            }
+        });
         await super.doOpen(widget, options);
     }
 
@@ -56,22 +60,13 @@ export class GitCommitDetailOpenHandler extends WidgetOpenHandler<GitCommitDetai
         return this.getCommitDetailWidgetOptions(commit);
     }
 
-    getCommitDetailWidgetOptions(commit: GitCommitDetails): GitCommitDetailWidgetOptions {
-        const range = {
-            fromRevision: commit.commitSha + '~1',
-            toRevision: commit.commitSha
-        };
+    getCommitDetailWidgetOptions(commitNode: { commitDetails: ScmCommit, sha: string, authorAvatar: string }): GitCommitDetailWidgetOptions {
+        const commit = commitNode.commitDetails;
+        const commitWithoutFileChanges = { ...commit, fileChanges: [] };
         return {
-            range,
-            authorAvatar: commit.authorAvatar,
-            authorDate: commit.authorDate,
-            authorDateRelative: commit.authorDateRelative,
-            authorEmail: commit.authorEmail,
-            authorName: commit.authorName,
-            commitMessage: commit.commitMessage,
-            fileChangeNodes: commit.fileChangeNodes,
-            messageBody: commit.messageBody,
-            commitSha: commit.commitSha
+            commitDetails: commitWithoutFileChanges,
+            sha: commitNode.sha,
+            authorAvatar: commitNode.authorAvatar,
         };
     }
 

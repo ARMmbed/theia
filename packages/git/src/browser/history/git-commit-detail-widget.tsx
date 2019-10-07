@@ -17,29 +17,17 @@
 import { injectable, inject } from 'inversify';
 import { Widget } from '@phosphor/widgets';
 import { LabelProvider } from '@theia/core/lib/browser';
-import { Git, GitFileChange } from '../../common';
+import { GitFileChange } from '../../common';
 import { GitDiffWidget } from '../diff/git-diff-widget';
 import { GitRepositoryProvider } from '../git-repository-provider';
-import { GitFileChangeNode } from '../git-file-change-node';
+import { ScmCommit } from '@theia/scm/lib/browser/scm-provider';
 import * as React from 'react';
 
-export const GIT_COMMIT_DETAIL = 'git-commit-detail-widget';
-
-export interface GitCommitDetails {
-    readonly authorName: string;
-    readonly authorEmail: string;
-    readonly authorDate: Date;
-    readonly authorDateRelative: string;
-    readonly authorAvatar: string;
-    readonly commitMessage: string;
-    readonly messageBody?: string;
-    readonly fileChangeNodes: GitFileChangeNode[];
-    readonly commitSha: string;
-}
-
 export const GitCommitDetailWidgetOptions = Symbol('GitCommitDetailWidgetOptions');
-export interface GitCommitDetailWidgetOptions extends GitCommitDetails {
-    readonly range: Git.Options.Range
+export interface GitCommitDetailWidgetOptions {
+    commitDetails: ScmCommit;
+    sha: string;
+    authorAvatar: string;
 }
 
 @injectable()
@@ -51,23 +39,28 @@ export class GitCommitDetailWidget extends GitDiffWidget {
         @inject(GitCommitDetailWidgetOptions) protected readonly commitDetailOptions: GitCommitDetailWidgetOptions
     ) {
         super();
-        this.id = 'commit' + commitDetailOptions.commitSha;
-        this.title.label = commitDetailOptions.commitSha;
-        this.options = { range: commitDetailOptions.range };
+        this.id = 'commit' + commitDetailOptions.commitDetails.id;
+        this.title.label = commitDetailOptions.commitDetails.id;  // Should be something different? - Nigel
+        this.options = {
+            range: {
+                fromRevision: commitDetailOptions.sha + '~1',
+                toRevision: commitDetailOptions.sha
+            }
+        };
         this.title.closable = true;
         this.title.iconClass = 'icon-git-commit tab-git-icon';
     }
 
     protected renderDiffListHeader(): React.ReactNode {
-        const authorEMail = this.commitDetailOptions.authorEmail;
-        const subject = <div className='subject'>{this.commitDetailOptions.commitMessage}</div>;
-        const body = <div className='body'>{this.commitDetailOptions.messageBody || ''}</div>;
+        const authorEMail = this.commitDetailOptions.commitDetails.authorEmail;
+        const subject = <div className='subject'>{this.commitDetailOptions.commitDetails.summary}</div>;
+        const body = <div className='body'>{this.commitDetailOptions.commitDetails.messageBody || ''}</div>;
         const subjectRow = <div className='header-row'><div className='subjectContainer'>{subject}{body}</div></div>;
-        const author = <div className='author header-value noWrapInfo'>{this.commitDetailOptions.authorName}</div>;
+        const author = <div className='author header-value noWrapInfo'>{this.commitDetailOptions.commitDetails.authorName}</div>;
         const mail = <div className='mail header-value noWrapInfo'>{`<${authorEMail}>`}</div>;
         const authorRow = <div className='header-row noWrapInfo'><div className='theia-header'>author: </div>{author}</div>;
         const mailRow = <div className='header-row noWrapInfo'><div className='theia-header'>e-mail: </div>{mail}</div>;
-        const authorDate = new Date(this.commitDetailOptions.authorDate);
+        const authorDate = new Date(this.commitDetailOptions.commitDetails.authorTimestamp);
         const dateStr = authorDate.toLocaleDateString('en', {
             month: 'short',
             day: 'numeric',
@@ -80,7 +73,7 @@ export class GitCommitDetailWidget extends GitDiffWidget {
         const dateRow = <div className='header-row noWrapInfo'><div className='theia-header'>date: </div>{date}</div>;
         const revisionRow = <div className='header-row noWrapInfo'>
             <div className='theia-header'>revision: </div>
-            <div className='header-value noWrapInfo'>{this.commitDetailOptions.commitSha}</div>
+            <div className='header-value noWrapInfo'>{this.commitDetailOptions.commitDetails.id}</div>  // need displayed field? - Nigel
         </div>;
         const gravatar = <div className='image-container'>
             <img className='gravatar' src={this.commitDetailOptions.authorAvatar}></img></div>;
