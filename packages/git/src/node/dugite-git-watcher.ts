@@ -41,7 +41,12 @@ export class DugiteGitWatcherServer implements GitWatcherServer {
         this.subscriptions.clear();
     }
 
+    protected trace(mark: string): void {
+        console.log(`ZZZ Watcher-Server ${mark}`);
+    }
+
     async watchGitChanges(repository: Repository): Promise<number> {
+        this.trace(`watchGitChanges ! ${repository.localUri.split('/').pop()}`);
         const reference = await this.manager.getWatcher(repository);
         const watcher = reference.object;
 
@@ -69,6 +74,7 @@ export class DugiteGitWatcherServer implements GitWatcherServer {
     }
 
     async unwatchGitChanges(watcher: number): Promise<void> {
+        this.trace('unwatchGitChanges !!!');
         const disposable = this.watchers.get(watcher);
         if (disposable) {
             disposable.dispose();

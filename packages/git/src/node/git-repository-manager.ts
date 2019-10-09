@@ -22,6 +22,10 @@ import { GitRepositoryWatcher, GitRepositoryWatcherFactory } from './git-reposit
 @injectable()
 export class GitRepositoryManager {
 
+    protected trace(mark: string, repository: Repository): void {
+        console.log(`ZZZ Repository-Manager ${mark} ${repository.localUri.split('/').pop()}`);
+    }
+
     @inject(GitRepositoryWatcherFactory)
     protected readonly watcherFactory: GitRepositoryWatcherFactory;
     protected readonly watchers = new ReferenceCollection<Repository, GitRepositoryWatcher>(
@@ -35,10 +39,12 @@ export class GitRepositoryManager {
     }
 
     getWatcher(repository: Repository): Promise<Reference<GitRepositoryWatcher>> {
+        this.trace('getWatcher', repository);
         return this.watchers.acquire(repository);
     }
 
     protected async sync(repository: Repository): Promise<void> {
+        this.trace('sync', repository);
         const reference = await this.getWatcher(repository);
         const watcher = reference.object;
         // dispose the reference once the next sync cycle is actaully completed

@@ -37,6 +37,11 @@ export class GitRepositoryWatcher implements Disposable {
     @inject(Git)
     protected readonly git: Git;
 
+    protected readonly instanceId = Math.floor(Math.random() * 1000);
+    protected trace(mark: string): void {
+        console.log(`ZZZ Repository-Watcher(${this.instanceId}) ${mark} ${this.options.repository.localUri.split('/').pop()}`);
+    }
+
     @inject(ILogger)
     protected readonly logger: ILogger;
 
@@ -49,6 +54,7 @@ export class GitRepositoryWatcher implements Disposable {
     }
 
     watch(): void {
+        this.trace('watch');
         if (this.state.watching) {
             console.debug('Repository watcher is already active.');
             return;
@@ -59,6 +65,7 @@ export class GitRepositoryWatcher implements Disposable {
 
     protected syncWorkPromises: Deferred<void>[] = [];
     sync(): Promise<void> {
+        this.trace('sync');
         if (this.state.idle) {
             if (this.interruptIdle) {
                 this.interruptIdle();
@@ -73,6 +80,7 @@ export class GitRepositoryWatcher implements Disposable {
 
     protected readonly toDispose = new DisposableCollection();
     dispose(): void {
+        this.trace('dispose !!!');
         this.toDispose.dispose();
         if (this.state.idle) {
             if (this.interruptIdle) {
@@ -87,6 +95,7 @@ export class GitRepositoryWatcher implements Disposable {
             const source = this.options.repository;
             const oldStatus = this.status;
             const newStatus = await this.git.status(source);
+            this.trace(`syncStatus changes: ${!WorkingDirectoryStatus.equals(newStatus, oldStatus)}`);
             if (!WorkingDirectoryStatus.equals(newStatus, oldStatus)) {
                 this.status = newStatus;
                 this.onGitStatusChangedEmitter.fire({ source, status: newStatus, oldStatus });
