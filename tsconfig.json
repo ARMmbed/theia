@@ -130,6 +130,9 @@
       "@theia/task/lib/*": [
         "packages/task/src/*"
       ],
+      "@theia/scm-extra/lib/*": [
+        "packages/scm-extra/src/*"
+      ],
       "@theia/terminal/lib/*": [
         "packages/terminal/src/*"
       ],
