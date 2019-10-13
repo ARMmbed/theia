@@ -90,12 +90,12 @@ export class LeftPanel {
     }
 
     isGitHistoryContainerVisible(): boolean {
-        return (this.driver.isExisting('#git-history') && this.driver.element('#git-history').getAttribute('class').split(' ').indexOf('p-mod-hidden') === -1
+        return (this.driver.isExisting('#scm-history') && this.driver.element('#scm-history').getAttribute('class').split(' ').indexOf('p-mod-hidden') === -1
             && this.isPanelVisible());
     }
 
     waitForGitHistoryViewVisible(): void {
-        this.driver.waitForVisible('#git-history');
+        this.driver.waitForVisible('#scm-history');
         // Wait for animations to finish
         this.driver.pause(300);
     }
