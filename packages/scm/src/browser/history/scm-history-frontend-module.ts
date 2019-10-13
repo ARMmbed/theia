@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2018 Ericsson and others.
+ * Copyright (C) 2019 Arm and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,20 +14,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { GitFileChange } from '../common/git-model';
+import { interfaces } from 'inversify';
+import { ScmHistoryContribution, SCM_HISTORY_ID } from './scm-history-contribution';
+import { WidgetFactory, bindViewContribution } from '@theia/core/lib/browser';
+import { ScmHistoryWidget } from './scm-history-widget';
 
-export interface GitFileChangeNode extends GitFileChange {
-    readonly icon: string;
-    readonly label: string;
-    readonly description: string;
-    readonly caption?: string;
-    readonly statusCaption?: string;
-    readonly extraIconClassName?: string;
-    readonly commitSha?: string;
-    selected?: boolean;
-}
-export namespace GitFileChangeNode {
-    export function is(node: Object | undefined): node is GitFileChangeNode {
-        return !!node && 'uri' in node && 'status' in node && 'description' in node && 'label' in node && 'icon' in node;
-    }
+import '../../../src/browser/style/history.css';
+
+export function bindScmHistoryModule(bind: interfaces.Bind): void {
+
+    bind(ScmHistoryWidget).toSelf();
+    bind(WidgetFactory).toDynamicValue(ctx => ({
+        id: SCM_HISTORY_ID,
+        createWidget: () => ctx.container.get<ScmHistoryWidget>(ScmHistoryWidget)
+    }));
+
+    bindViewContribution(bind, ScmHistoryContribution);
+
 }
