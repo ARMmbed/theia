@@ -20,7 +20,6 @@ import { WidgetFactory, bindViewContribution } from '@theia/core/lib/browser';
 import { ScmHistoryWidget } from './scm-history-widget';
 
 import '../../../src/browser/style/history.css';
-import '../../../src/browser/style/git-icons.css';
 
 export function bindScmHistoryModule(bind: interfaces.Bind) {
 
