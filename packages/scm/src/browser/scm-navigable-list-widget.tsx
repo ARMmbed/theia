@@ -76,7 +76,7 @@ export abstract class ScmNavigableListWidget<T extends { selected?: boolean }> e
 
     protected relativePath(uri: URI | string): string {
         const parsedUri = typeof uri === 'string' ? new URI(uri) : uri;
-        const repository = this.scmService.selectedRepository;
+        const repository = this.scmService.findRepository(parsedUri);
         if (repository) {
             const repositoryUri = new URI(repository.provider.rootUri);
             const relativePath = repositoryUri.relative(new URI(String(uri)));

@@ -61,6 +61,7 @@ export class GitDiffWidget extends ScmNavigableListWidget<GitFileChangeNode> imp
         this.title.closable = true;
         this.title.iconClass = 'theia-git-diff-icon';
 
+        this.addClass('theia-scm');
         this.addClass('theia-git');
     }
 
@@ -145,7 +146,7 @@ export class GitDiffWidget extends ScmNavigableListWidget<GitFileChangeNode> imp
         this.scmNodes = this.fileChangeNodes;
         const commitishBar = this.renderDiffListHeader();
         const fileChangeList = this.renderFileChangeList();
-        return <div className='git-diff-container'>{commitishBar}{fileChangeList}</div>;
+        return <div className='scm-diff-container'>{commitishBar}{fileChangeList}</div>;
     }
 
     protected renderDiffListHeader(): React.ReactNode {

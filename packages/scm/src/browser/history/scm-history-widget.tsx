@@ -117,7 +117,7 @@ export class ScmHistoryWidget extends ScmNavigableListWidget<ScmHistoryListNode>
         this.title.caption = SCM_HISTORY_LABEL;
         this.title.iconClass = 'fa scm-history-tab-icon';
         this.title.closable = true;
-        this.addClass('theia-git');
+        this.addClass('theia-scm');
         this.resetState();
         this.cancelIndicator = new CancellationTokenSource();
     }
@@ -359,7 +359,7 @@ export class ScmHistoryWidget extends ScmNavigableListWidget<ScmHistoryListNode>
                 </div>;
                 break;
         }
-        return <div className='git-diff-container'>
+        return <div className='scm-diff-container'>
             {content}
         </div>;
     }
