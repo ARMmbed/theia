@@ -396,7 +396,10 @@ app.on('ready', () => {
             // See: https://github.com/eclipse-theia/theia/issues/835
             process.kill(cp.pid);
         });
-    }
+        }${
+            this.pck.backendElectronMasterModules.size > 0 ?
+                `
+        require('../backend/electron-master.js');` : ''}
 });
 `;
     }
