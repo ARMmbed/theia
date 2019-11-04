@@ -550,14 +550,19 @@ export class HgImpl implements Hg {
     async parent(repository: Repository): Promise<string> {
         const repo = await this.getHgRepo(repository);
 
-        const args: string[] = ['parent', '--template', parentTemplate];
+        const args: string[] = ['parent', '--template', '{node} {rev}'];
         const outputChunks = await repo.runCommand(args);
         if (outputChunks.length !== 1) {
             throw new Error(`Expected a single parent to the working tree, but got ${outputChunks.length}.`);
         }
 
-        const commitLine = JSON.parse(outputChunks[0]);
-        return commitLine.revision;
+        const match = /^(?:\S+) (\S+)$/.exec(outputChunks[0]);
+
+        if (match && match.length >= 2) {
+            return match[1];
+        }
+
+        throw new Error(`Unexpected output from Mercurial ${outputChunks[0]}`);
     }
 
     /**
@@ -685,10 +690,3 @@ const logTemplate: string =
     '  "modified": "{file_mods}",\\n' +
     '  "deleted": "{file_dels}"\n}' +
     'end-json-start-desc{desc}';
-
-/**
- * This template outputs data in JSON format so the output from the 'parent' command is easily parsed.
- */
-const parentTemplate: string =
-    '\\{ "node": "{node}",\\n' +
-    '  "revision": "{rev}"\n}';
