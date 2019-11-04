@@ -141,7 +141,7 @@ export class HgDiffWidget extends ScmNavigableListWidget<HgFileChangeNode> imple
         this.scmNodes = this.fileChangeNodes;
         const commitishBar = this.renderDiffListHeader();
         const fileChangeList = this.renderFileChangeList();
-        return <div className='hg-diff-container'>{commitishBar}{fileChangeList}</div>;
+        return <div className='scm-diff-container'>{commitishBar}{fileChangeList}</div>;
     }
 
     protected renderDiffListHeader(): React.ReactNode {
