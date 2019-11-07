@@ -507,6 +507,9 @@ export class HgImpl implements Hg {
 
         const outputChunks = await repo.runCommand(args);
 
+        // TODO: Parse new log template output format
+        // const lines = outputChunks.join('').split('\n');
+
         return outputChunks.map(chunk => {
             /*
              * Note that 'desc' is not output in json format.  This is because the 'desc'
@@ -680,13 +683,7 @@ export class HgImpl implements Hg {
 }
 
 /**
- * This template outputs data in JSON format so the output from the log command is easily parsed.
+ * This template formats log entries so they are easy to parse: the JSON stringifying and URL escaping means each section
+ * is exactly one line.
  */
-const logTemplate: string =
-    '\\{ "node": "{node}",\\n' +
-    '  "author": "{author}",\\n' +
-    '  "timestamp": "{date|hgdate}",\\n' +
-    '  "added": "{file_adds}",\\n' +
-    '  "modified": "{file_mods}",\\n' +
-    '  "deleted": "{file_dels}"\n}' +
-    'end-json-start-desc{desc}';
+const logTemplate = '{node}\n{author}\n{isodate(date)}\n{json(file_adds)}\n{json(file_mods)}\n{json(file_dels)}\n{urlescape(desc)}\n';
