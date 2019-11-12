@@ -665,6 +665,7 @@ export class HgImpl implements Hg {
      */
     async revert(repository: Repository, options: Hg.Options.Revert): Promise<void> {
         const args = ['revert'];
+        args.push('--no-backup');
         if (options.revision) {
             args.push('-r');
             args.push(options.revision);
