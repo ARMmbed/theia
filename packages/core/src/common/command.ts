@@ -151,7 +151,7 @@ export interface CommandService {
     readonly onWillExecuteCommand: Event<WillExecuteCommandEvent>;
 
     /**
-     * An event is emmited when a command is about to be executed.
+     * An event is emmited when a command has been successfully to be executed.
      */
     readonly onDidExecuteCommand: Event<DidExecuteCommandEvent>;
 }
