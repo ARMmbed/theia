@@ -152,8 +152,6 @@ export interface CommandService {
 
     /**
      * An event is emmited when a command is about to be executed.
-     *
-     * It can be used to install or activate a command handler.
      */
     readonly onDidExecuteCommand: Event<DidExecuteCommandEvent>;
 }
