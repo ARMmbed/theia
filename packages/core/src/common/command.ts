@@ -120,11 +120,13 @@ export interface CommandContribution {
 
 export interface WillExecuteCommandEvent extends WaitUntilEvent {
     commandId: string;
+    // tslint:disable-next-line:no-any
     args: any[];
 }
 
 export interface DidExecuteCommandEvent extends WaitUntilEvent {
     commandId: string;
+    // tslint:disable-next-line:no-any
     args: any[];
 }
 
@@ -300,10 +302,12 @@ export class CommandRegistry implements CommandService {
         throw new Error(`The command '${commandId}' cannot be executed. There are no active handlers available for the command.${argsMessage}`);
     }
 
+    // tslint:disable-next-line:no-any
     protected async fireWillExecuteCommand(commandId: string, args: any[]): Promise<void> {
         await WaitUntilEvent.fire(this.onWillExecuteCommandEmitter, { commandId, args }, 30000);
     }
 
+    // tslint:disable-next-line:no-any
     protected async fireDidExecuteCommand(commandId: string, args: any[]): Promise<void> {
         await WaitUntilEvent.fire(this.onDidExecuteCommandEmitter, { commandId, args }, 30000);
     }
