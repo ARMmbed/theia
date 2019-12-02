@@ -120,6 +120,12 @@ export interface CommandContribution {
 
 export interface WillExecuteCommandEvent extends WaitUntilEvent {
     commandId: string;
+    args: any[];
+}
+
+export interface DidExecuteCommandEvent extends WaitUntilEvent {
+    commandId: string;
+    args: any[];
 }
 
 export const commandServicePath = '/services/commands';
@@ -141,6 +147,13 @@ export interface CommandService {
      * It can be used to install or activate a command handler.
      */
     readonly onWillExecuteCommand: Event<WillExecuteCommandEvent>;
+
+    /**
+     * An event is emmited when a command is about to be executed.
+     *
+     * It can be used to install or activate a command handler.
+     */
+    readonly onDidExecuteCommand: Event<DidExecuteCommandEvent>;
 }
 
 /**
@@ -157,6 +170,9 @@ export class CommandRegistry implements CommandService {
 
     protected readonly onWillExecuteCommandEmitter = new Emitter<WillExecuteCommandEvent>();
     readonly onWillExecuteCommand = this.onWillExecuteCommandEmitter.event;
+
+    protected readonly onDidExecuteCommandEmitter = new Emitter<DidExecuteCommandEvent>();
+    readonly onDidExecuteCommand = this.onDidExecuteCommandEmitter.event;
 
     constructor(
         @inject(ContributionProvider) @named(CommandContribution)
@@ -269,10 +285,11 @@ export class CommandRegistry implements CommandService {
      */
     // tslint:disable-next-line:no-any
     async executeCommand<T>(commandId: string, ...args: any[]): Promise<T | undefined> {
-        await this.fireWillExecuteCommand(commandId);
+        await this.fireWillExecuteCommand(commandId, args);
         const handler = this.getActiveHandler(commandId, ...args);
         if (handler) {
             const result = await handler.execute(...args);
+            await this.fireDidExecuteCommand(commandId, args);
             const command = this.getCommand(commandId);
             if (command) {
                 this.addRecentCommand(command);
@@ -283,8 +300,12 @@ export class CommandRegistry implements CommandService {
         throw new Error(`The command '${commandId}' cannot be executed. There are no active handlers available for the command.${argsMessage}`);
     }
 
-    protected async fireWillExecuteCommand(commandId: string): Promise<void> {
-        await WaitUntilEvent.fire(this.onWillExecuteCommandEmitter, { commandId }, 30000);
+    protected async fireWillExecuteCommand(commandId: string, args: any[]): Promise<void> {
+        await WaitUntilEvent.fire(this.onWillExecuteCommandEmitter, { commandId, args }, 30000);
+    }
+
+    protected async fireDidExecuteCommand(commandId: string, args: any[]): Promise<void> {
+        await WaitUntilEvent.fire(this.onDidExecuteCommandEmitter, { commandId, args }, 30000);
     }
 
     /**
