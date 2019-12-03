@@ -119,14 +119,14 @@ export interface CommandContribution {
 }
 
 export interface WillExecuteCommandEvent extends WaitUntilEvent {
-    timestamp: number;
+    executionId: string;
     commandId: string;
     // tslint:disable-next-line:no-any
     args: any[];
 }
 
 export interface DidExecuteCommandEvent extends WaitUntilEvent {
-    timestamp: number;
+    executionId: string;
     commandId: string;
     // tslint:disable-next-line:no-any
     args: any[];
@@ -287,12 +287,12 @@ export class CommandRegistry implements CommandService {
      */
     // tslint:disable-next-line:no-any
     async executeCommand<T>(commandId: string, ...args: any[]): Promise<T | undefined> {
-        const timestamp = Date.now();
-        await this.fireWillExecuteCommand(commandId, timestamp, args);
+        const executionId = Date.now().toString();
+        await this.fireWillExecuteCommand(commandId, executionId, args);
         const handler = this.getActiveHandler(commandId, ...args);
         if (handler) {
             const result = await handler.execute(...args);
-            await this.fireDidExecuteCommand(commandId, timestamp, args);
+            await this.fireDidExecuteCommand(commandId, executionId, args);
             const command = this.getCommand(commandId);
             if (command) {
                 this.addRecentCommand(command);
@@ -304,13 +304,13 @@ export class CommandRegistry implements CommandService {
     }
 
     // tslint:disable-next-line:no-any
-    protected async fireWillExecuteCommand(commandId: string, timestamp: number, args: any[]): Promise<void> {
-        await WaitUntilEvent.fire(this.onWillExecuteCommandEmitter, { commandId, timestamp, args }, 30000);
+    protected async fireWillExecuteCommand(commandId: string, executionId: string, args: any[]): Promise<void> {
+        await WaitUntilEvent.fire(this.onWillExecuteCommandEmitter, { commandId, executionId, args }, 30000);
     }
 
     // tslint:disable-next-line:no-any
-    protected async fireDidExecuteCommand(commandId: string, timestamp: number, args: any[]): Promise<void> {
-        await WaitUntilEvent.fire(this.onDidExecuteCommandEmitter, { commandId, timestamp, args }, 30000);
+    protected async fireDidExecuteCommand(commandId: string, executionId: string, args: any[]): Promise<void> {
+        await WaitUntilEvent.fire(this.onDidExecuteCommandEmitter, { commandId, executionId, args }, 30000);
     }
 
     /**
