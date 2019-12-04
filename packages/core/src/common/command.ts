@@ -163,7 +163,7 @@ export interface CommandService {
  */
 @injectable()
 export class CommandRegistry implements CommandService {
-
+    private executionId = 0;
     protected readonly _commands: { [id: string]: Command } = {};
     protected readonly _handlers: { [id: string]: CommandHandler[] } = {};
 
@@ -287,7 +287,7 @@ export class CommandRegistry implements CommandService {
      */
     // tslint:disable-next-line:no-any
     async executeCommand<T>(commandId: string, ...args: any[]): Promise<T | undefined> {
-        const executionId = Date.now().toString();
+        const executionId = `${commandId}--${this.executionId++}`;
         await this.fireWillExecuteCommand(commandId, executionId, args);
         const handler = this.getActiveHandler(commandId, ...args);
         if (handler) {
