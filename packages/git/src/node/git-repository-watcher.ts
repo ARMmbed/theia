@@ -53,8 +53,8 @@ export class GitRepositoryWatcher implements Disposable {
 
     protected gitIgnoreTester: string[] | undefined;
 
-    sync(): void {
-        this.syncStatus(false);
+    sync(): Promise<void> {
+        return this.syncStatus(false);
     }
 
     protected onDidFilesChanged(changes: DidFilesChangedParams): void {
