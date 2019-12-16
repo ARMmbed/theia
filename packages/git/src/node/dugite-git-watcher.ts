@@ -71,7 +71,11 @@ export class DugiteGitWatcherServer implements GitWatcherServer {
     async unwatchGitChanges(watcher: number): Promise<void> {
         const disposable = this.watchers.get(watcher);
         if (disposable) {
-            disposable.dispose();
+            try {
+                disposable.dispose();
+            } catch (error) {
+                console.error(error);
+            }
             this.watchers.delete(watcher);
         } else {
             throw new Error(`No Git watchers were registered with ID: ${watcher}.`);
