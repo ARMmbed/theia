@@ -287,7 +287,7 @@ export class CommandRegistry implements CommandService {
      */
     // tslint:disable-next-line:no-any
     async executeCommand<T>(commandId: string, ...args: any[]): Promise<T | undefined> {
-        const executionId = `${commandId}--${this.executionId++}`;
+        const executionId = `${commandId}:${this.executionId++}`;
         await this.fireWillExecuteCommand(commandId, executionId, args);
         const handler = this.getActiveHandler(commandId, ...args);
         if (handler) {
