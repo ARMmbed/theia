@@ -242,7 +242,7 @@ export class ScmHistoryWidget extends ScmNavigableListWidget<ScmHistoryListNode>
                 try {
                     const currentCommits = this.status.state === 'ready' ? this.status.commits : [];
 
-                    let history = await this.historySupport.getCommitHistory(options);
+                    let sourceHistory = await this.historySupport.getCommitHistory(options);
                     if (token.isCancellationRequested || !this.hasMoreCommits) {
                         return;
                     }
@@ -251,10 +251,10 @@ export class ScmHistoryWidget extends ScmNavigableListWidget<ScmHistoryListNode>
                         this.hasMoreCommits = false;
                     }
                     if (currentCommits.length > 0) {
-                        history = history.slice(1);
+                        sourceHistory = sourceHistory.slice(1);
                     }
                     const commits: ScmCommitNode[] = [];
-                    for (const commit of history) {
+                    for (const commit of sourceHistory) {
                         const avatarUrl = await this.avatarService.getAvatar(commit.authorEmail);
                         commits.push({
                             commitDetails: commit,
@@ -635,7 +635,13 @@ export class ScmHistoryList extends React.Component<ScmHistoryList.Props> {
                                     registerChild(list);
                                 }}
                                 width={width}
-                                height={height}
+                                // HACK: Starting with Theia 12, this is called first with width and height at zero (for measuring)
+                                // then with width=190 and height=0, but never with a non-zero height.
+                                // In comparison, when using Theia 9, the correct height comes in on the second call.
+                                // If you put a breakpoint on line 51 of AutoSizer.js then you will see
+                                // parentNode.offsetHeight is set to zero!  (offsetHeight is set correctly in Theia 9 branch).
+                                // We can fix this here by setting the height to a value we are sure is big enough.
+                                height={height === 0 ? 2000 : height}
                                 onRowsRendered={onRowsRendered}
                                 rowRenderer={this.measureRowRenderer}
                                 rowHeight={this.measureCache.rowHeight}
@@ -655,7 +661,7 @@ export class ScmHistoryList extends React.Component<ScmHistoryList.Props> {
         </InfiniteLoader>;
     }
 
-    componentWillUpdate(): void {
+    UNSAFE_componentWillUpdate(): void {
         this.measureCache.clearAll();
     }
 
