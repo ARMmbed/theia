@@ -23,6 +23,13 @@
     mask: url('git-diff.svg');
 }
 
+.theia-git .git-diff-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+}
+    
 .theia-git .revision .row-title {
     width: 35px;
     display: inline-block;
