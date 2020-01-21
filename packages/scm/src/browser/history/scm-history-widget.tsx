@@ -489,7 +489,7 @@ export class ScmHistoryWidget extends ScmNavigableListWidget<ScmHistoryListNode>
     }
 
     protected renderScmItem(changeNode: ScmFileChangeNode, commitSha: string): React.ReactNode {
-        return <div key={changeNode.fileChange.uri} className={`gitItem noselect${changeNode.selected ? ' ' + SELECTED_CLASS : ''}`}>
+        return <div key={changeNode.fileChange.uri} className={`scmItem noselect${changeNode.selected ? ' ' + SELECTED_CLASS : ''}`}>
             <div
                 title={changeNode.caption}
                 className='noWrapInfo'
@@ -511,7 +511,7 @@ export class ScmHistoryWidget extends ScmNavigableListWidget<ScmHistoryListNode>
             }
             <div
                 title={changeNode.caption}
-                className={'status staged ' + changeNode.fileChange.getClassNameForStatus().toLowerCase()}>
+                className={changeNode.fileChange.getClassNameForStatus()}>
                 {changeNode.fileChange.getStatusCaption().charAt(0)}
             </div>
         </div>;

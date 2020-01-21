@@ -44,16 +44,6 @@
     white-space: nowrap;
 }
 
-.theia-git .gitItem.diff-file {
-    margin: 1px 0 !important;
-    padding: 0 !important;
-}
-
-.theia-git .gitItem.diff-file:hover {
-    background-color: inherit !important;
-    cursor: inherit !important;
-}
-
 .theia-git .lrBtns {
     display:flex;
     align-items: center;

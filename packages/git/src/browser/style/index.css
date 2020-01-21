@@ -41,7 +41,8 @@
     justify-content: space-between;
 }
 
-.theia-git .gitItem {
+/* FIXME - Nigel */
+.theia-git .scmItem {
     margin: 1px 0 1px 3px;
     padding: 2px;
     font-size: var(--theia-ui-font-size1);
@@ -49,51 +50,36 @@
     justify-content: space-between;
 }
 
-.theia-git .gitItem .file-icon {
-    display: initial;
-}
-
-.theia-git .gitItem:hover {
-    background-color: var(--theia-layout-color2);
-    cursor: pointer;
-}
-
-.theia-git .gitItem .path {
-    color: var(--theia-ui-font-color2);
-    font-size: var(--theia-ui-font-size0);
-    margin-left: 3px;
-}
-
-.theia-git .gitItem .status {
+.theia-scm .scmItem .git-status {
     padding: 2px 4px;
     font-size: var(--theia-ui-font-size0);
 }
 
-.theia-git .gitItem .status.new {
+.theia-scm .scmItem .git-status.new {
     color: var(--theia-success-color0);
 }
 
-.theia-git .gitItem .status.new.staged {
+.theia-scm .scmItem .git-status.new.staged {
     color: var(--theia-success-color0);
 }
 
-.theia-git .gitItem .status.modified {
+.theia-scm .scmItem .git-status.modified {
     color: var(--theia-brand-color0);
 }
 
-.theia-git .gitItem .status.deleted {
+.theia-scm .scmItem .git-status.deleted {
     color: var(--theia-warn-color0);
 }
 
-.theia-git .gitItem .status.renamed {
+.theia-scm .scmItem .git-status.renamed {
     color: var(--theia-brand-color0);
 }
 
-.theia-git .gitItem .status.conflicted {
+.theia-scm .scmItem .git-status.conflicted {
     color: var(--theia-error-color0);
 }
 
-.theia-git .gitItem .status.copied {
+.theia-scm .scmItem .git-status.copied {
     color: var(--theia-brand-color0);
 }
 

@@ -512,7 +512,7 @@ export class GitScmFileChange implements ScmFileChange {
     }
 
     getClassNameForStatus(): string {
-        return GitFileStatus[this.fileChange.status];
+        return 'git-status staged ' + GitFileStatus[this.fileChange.status].toLowerCase();
     }
 
     getUriToOpen(): URI {

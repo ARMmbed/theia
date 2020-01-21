@@ -260,7 +260,7 @@ export class GitDiffWidget extends ScmNavigableListWidget<GitFileChangeNode> imp
     }
 
     protected renderGitItem(change: GitFileChangeNode): React.ReactNode {
-        return <div key={change.uri.toString()} className={`gitItem noselect${change.selected ? ' ' + SELECTED_CLASS : ''}`}>
+        return <div key={change.uri.toString()} className={`scmItem noselect${change.selected ? ' ' + SELECTED_CLASS : ''}`}>
             <div
                 title={change.caption}
                 className='noWrapInfo'
@@ -282,7 +282,7 @@ export class GitDiffWidget extends ScmNavigableListWidget<GitFileChangeNode> imp
             }
             <div
                 title={change.caption}
-                className={'status staged ' + GitFileStatus[change.status].toLowerCase()}>
+                className={'git-status staged ' + GitFileStatus[change.status].toLowerCase()}>
                 {change.statusCaption ? change.statusCaption.charAt(0) : undefined}
             </div>
         </div>;
