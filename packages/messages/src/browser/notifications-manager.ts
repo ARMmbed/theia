@@ -202,7 +202,7 @@ export class NotificationManager extends MessageClient {
         }
     }
     protected getTimeout(plainMessage: PlainMessage): number {
-        if (plainMessage.actions && !plainMessage.actions.length) {
+        if (plainMessage.actions && plainMessage.actions.length) {
             return 0;
         }
         return plainMessage.options && plainMessage.options.timeout || this.preferences['notification.timeout'];
