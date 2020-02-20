@@ -46,7 +46,6 @@
     "@theia/scm": "^0.15.0",
     "@theia/search-in-workspace": "^0.15.0",
     "@theia/task": "^0.15.0",
-    "@theia/terminal": "^0.15.0",
     "@theia/typehierarchy": "^0.15.0",
     "@theia/userstorage": "^0.15.0",
     "@theia/variable-resolver": "^0.15.0",

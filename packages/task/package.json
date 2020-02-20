@@ -10,7 +10,6 @@
     "@theia/monaco": "^0.15.0",
     "@theia/preferences": "^0.15.0",
     "@theia/process": "^0.15.0",
-    "@theia/terminal": "^0.15.0",
     "@theia/variable-resolver": "^0.15.0",
     "@theia/workspace": "^0.15.0",
     "ajv": "^6.5.3",
@@ -51,7 +50,8 @@
     "test": "theiaext test"
   },
   "devDependencies": {
-    "@theia/ext-scripts": "^0.15.0"
+    "@theia/ext-scripts": "^0.15.0",
+    "@theia/terminal": "^0.15.0"
   },
   "nyc": {
     "extends": "../../configs/nyc.json"
