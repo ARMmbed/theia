@@ -70,11 +70,7 @@ export class ElectronFileDialogService extends DefaultFileDialogService {
                         return;
                     }
                     const uri = FileUri.create(filename);
-                    if (this.canReadWrite(uri)) {
-                        resolve(uri);
-                    } else {
-                        resolve(undefined);
-                    }
+                    resolve(uri);
                 });
             });
         }
