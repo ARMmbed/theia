@@ -27,10 +27,6 @@
     height: 100%;
 }
 
-.theia-side-panel .theia-scm {
-    padding-left: 19px;
-}
-
 .groups-outer-container:focus {
     outline: 0;
     box-shadow: none;
