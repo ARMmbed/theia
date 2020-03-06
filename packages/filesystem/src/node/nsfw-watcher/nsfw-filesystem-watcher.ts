@@ -33,6 +33,8 @@ const debounce = require('lodash.debounce');
 
 // tslint:disable:no-any
 
+type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
+
 export interface WatcherOptions {
     ignored: IMinimatch[]
 }
@@ -125,12 +127,13 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
                 }
             }
         }, {
-                errorCallback: error => {
-                    // see https://github.com/atom/github/issues/342
-                    console.warn(`Failed to watch "${basePath}":`, error);
-                    this.unwatchFileChanges(watcherId);
-                }
-            });
+            errorCallback: error => {
+                // see https://github.com/atom/github/issues/342
+                console.warn(`Failed to watch "${basePath}":`, error);
+                this.unwatchFileChanges(watcherId);
+            },
+            ...this.getNsfwOptions(basePath, options)
+        });
         await watcher.start();
         this.options.info('Started watching:', basePath);
         if (toDisposeWatcher.disposed) {
@@ -238,4 +241,8 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
         }
     }
 
+    // Allow any inheriting classes to provide options to NSFW
+    protected getNsfwOptions(basePath: string, options: WatchOptions): Omit<nsfw.Options, 'errorCallback'> {
+        return {};
+    }
 }
