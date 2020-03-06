@@ -33,8 +33,6 @@ const debounce = require('lodash.debounce');
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
-
 export interface WatcherOptions {
     ignored: IMinimatch[]
 }
@@ -56,15 +54,18 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
     protected readonly options: {
         verbose: boolean
         info: (message: string, ...args: any[]) => void
-        error: (message: string, ...args: any[]) => void
+        error: (message: string, ...args: any[]) => void,
+        nsfwOptions: nsfw.Options
     };
 
     constructor(options?: {
         verbose?: boolean,
+        nsfwOptions?: nsfw.Options,
         info?: (message: string, ...args: any[]) => void
         error?: (message: string, ...args: any[]) => void
     }) {
         this.options = {
+            nsfwOptions: {},
             verbose: false,
             info: (message, ...args) => console.info(message, ...args),
             error: (message, ...args) => console.error(message, ...args),
@@ -132,7 +133,7 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
                 console.warn(`Failed to watch "${basePath}":`, error);
                 this.unwatchFileChanges(watcherId);
             },
-            ...this.getNsfwOptions(basePath, options)
+            ...this.options.nsfwOptions
         });
         await watcher.start();
         this.options.info('Started watching:', basePath);
@@ -239,10 +240,5 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
         if (this.options.verbose) {
             this.options.info(message, ...params);
         }
-    }
-
-    // Allow any inheriting classes to provide options to NSFW
-    protected getNsfwOptions(basePath: string, options: WatchOptions): Omit<nsfw.Options, 'errorCallback'> {
-        return {};
     }
 }
