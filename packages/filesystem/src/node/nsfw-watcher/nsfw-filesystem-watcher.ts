@@ -129,7 +129,8 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
                     // see https://github.com/atom/github/issues/342
                     console.warn(`Failed to watch "${basePath}":`, error);
                     this.unwatchFileChanges(watcherId);
-                }
+                },
+                ...this.getNsfwOptions()
             });
         await watcher.start();
         this.options.info('Started watching:', basePath);
@@ -238,4 +239,7 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
         }
     }
 
+    protected getNsfwOptions(): nsfw.Options {
+        return {};
+    }
 }
