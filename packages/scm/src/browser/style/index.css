@@ -13,6 +13,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
+
+.theia-scm-commit {
+    overflow: hidden;
+    font-size: var(--theia-ui-font-size1);
+    max-height: calc(100% - var(--theia-border-width));
+    position: relative;
+}
+
 .theia-scm {
     color: var(--theia-ui-font-color1);
     padding: 5px;
@@ -42,7 +50,7 @@
     font-weight: bold;
 }
 
-.theia-scm .changesContainer {
+.theia-scm .theia-scm-amend {
     margin: 5px 0;
 }
 
@@ -184,7 +192,25 @@
     font-size: var(--theia-ui-font-size1);
     display: flex;
     justify-content: space-between;
+    /* review following - Nigel */
+    height: var(--theia-content-line-height);
+    line-height: var(--theia-content-line-height);
+    padding: 0px calc(var(--theia-ui-padding)/2);
 }
+
+.theia-scm .scmItem:hover {
+    cursor: pointer;
+}
+
+.theia-scm:focus-within .scmItem:focus {
+    background: var(--theia-list-focusBackground);
+    color: var(--theia-list-focusForeground);
+}
+
+.theia-scm:not(:focus-within) .scmItem:not(:focus) {
+    background: var(--theia-list-inactiveFocusBackground);
+}
+/* to here */
 
 .theia-scm .scmItem .file-icon {
     display: initial;
@@ -218,7 +244,7 @@
 }
 
 .scm-theia-header:hover {
-    background-color: var(--theia-layout-color2);
+    background-color: var(--theia-layout-color2); /* remove this? Nigel */
     cursor: pointer;
 }
 
@@ -252,4 +278,8 @@
     height: 16px;
     width: 12px;
     background: var(--theia-icon-open-file) no-repeat center center;
+}
+
+.theia-scm-panel {
+    overflow: visible;
 }

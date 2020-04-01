@@ -311,7 +311,7 @@
     align-self: center;
 }
 
-.theia-TreeNode:hover .notification-count-container {
+.theia-TreeNode:hover .result-head .notification-count-container {
     display: none;
 }
 
