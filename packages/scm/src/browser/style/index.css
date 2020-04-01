@@ -13,6 +13,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
+
+.theia-scm-commit {
+    overflow: hidden;
+    font-size: var(--theia-ui-font-size1);
+    max-height: calc(100% - var(--theia-border-width));
+    position: relative;
+}
+
 .theia-scm {
     padding: 5px;
     box-sizing: border-box;
@@ -44,7 +52,7 @@
     font-weight: bold;
 }
 
-.theia-scm .changesContainer {
+.theia-scm .theia-scm-amend {
     margin: 5px 0;
 }
 
@@ -263,4 +271,8 @@
     height: var(--theia-icon-size);
     width: 12px;
     background: var(--theia-icon-open-file) no-repeat center center;
+}
+
+.theia-scm-panel {
+    overflow: visible;
 }
