@@ -992,9 +992,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.14.19.tgz#f52742c7834a815dedf66edfc8a51547e2a67342"
   integrity sha512-j6Sqt38ssdMKutXBUuAcmWF8QtHW1Fwz/mz4Y+Wd9mzpBiVFirjpNQf363hG5itkG+yGaD+oiLyb50HxJ36l9Q==
 
-"@types/node@^8.0.26":
-  version "8.10.26"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.26.tgz#950e3d4e6b316ba6e1ae4e84d9155aba67f88c2f"
+"@types/node@^10.14.22":
+  version "10.17.20"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.17.20.tgz#e6d8b3631af1e59bbb4fda04926b078acdd3c2ef"
+  integrity sha512-XgDgo6W10SeGEAM0k7FosJpvLCynOTYns4Xk3J5HGrA+UI/bKZ30PGMzOP5Lh2zs4259I71FSYLAtjnx3qhObw==
 
 "@types/node@~10.3.6":
   version "10.3.6"
@@ -1136,6 +1137,11 @@
   resolved "https://registry.yarnpkg.com/@types/webdriverio/-/webdriverio-4.10.3.tgz#05861e9134ab41a693a42cd9bf4186593096f004"
   dependencies:
     "@types/node" "*"
+
+"@types/which@^1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@types/which/-/which-1.3.2.tgz#9c246fc0c93ded311c8512df2891fb41f6227fdf"
+  integrity sha512-8oDqyLC7eD4HM307boe2QWKyuzdzWBj56xI/imSl2cpL+U3tCMaTAkMJ4ee5JBZ/FsOJlvRGeIShiZDAl1qERA==
 
 "@types/write-json-file@^2.2.1":
   version "2.2.1"
@@ -4134,14 +4140,14 @@ dtrace-provider@~0.8:
   dependencies:
     nan "^2.10.0"
 
-dugite-extra@0.1.11:
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/dugite-extra/-/dugite-extra-0.1.11.tgz#b0cc8c94990c1658240659efdcfc1b03669f1ce9"
-  integrity sha512-X3jmKopZrTGG00FefniFSptcAIH3sgB7DtOpdlqnG9Z1SZ+gjAvB4eeTdTNzz59ekcwUQjM67s86kl7dkG1nKw==
+dugite-extra@0.1.12:
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/dugite-extra/-/dugite-extra-0.1.12.tgz#fc2f5e2fb288e688aaec7a770a24a21293831175"
+  integrity sha512-bYcOoa1l1HqD23lfUJIctrL/DSYIdj1JUD9gNdQB+Y3albl67G1HZsGQueoT/sNE7ijr7pGxOI7NmKtoe5zJjA==
   dependencies:
     byline "^5.0.0"
     dugite-no-gpl "1.69.0"
-    find-git-exec "0.0.1-alpha.2"
+    find-git-exec "^0.0.2"
     upath "^1.0.0"
 
 dugite-no-gpl@1.69.0:
@@ -4876,16 +4882,19 @@ find-cache-dir@^3.0.0:
     make-dir "^3.0.0"
     pkg-dir "^4.1.0"
 
-find-git-exec@0.0.1-alpha.2, find-git-exec@^0.0.1-alpha.2:
-  version "0.0.1-alpha.2"
-  resolved "https://registry.yarnpkg.com/find-git-exec/-/find-git-exec-0.0.1-alpha.2.tgz#02c266b3be6e411c19aa5fd6f813c96a73286fac"
+find-git-exec@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/find-git-exec/-/find-git-exec-0.0.2.tgz#be97e5fd2b1d6f9a3d0528dae9eb1687de255a7a"
+  integrity sha512-QspUJn996F9UyKDSG4C+G5/epoAZw9p/j2RPIcg8L8izxFccwjJtMd545TWGO0GqJFe+hW1NJKa/1ij3rM/ynw==
   dependencies:
-    "@types/node" "^8.0.26"
+    "@types/node" "^10.14.22"
+    "@types/which" "^1.3.2"
+    which "^2.0.1"
 
-find-git-repositories@^0.1.1:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/find-git-repositories/-/find-git-repositories-0.1.2.tgz#401349f543c1000d1bf5e83f12a52ecc047b6e5d"
-  integrity sha512-HY5YSB/COXlr1v1qA/q0FyNg80yR5aH6vUEZtEnEhXQhkPcmXpvm/GLsAcCDcfNSay1ggUCScKcUwBXy+NSgQA==
+find-git-repositories@^0.1.0:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/find-git-repositories/-/find-git-repositories-0.1.3.tgz#4e83e085b20cb3e393c1e091adc3a3eec50b6dda"
+  integrity sha512-6q8ZIQ7loe0eWbz1O79J0gQ2wVpQ1ajsjV64HC2iJ7gOOqlEuDlG/T0xYr5gDYBFSHlS8dah1KGbndiWWdJ0PA==
   dependencies:
     nan "^2.14.0"
 
@@ -6897,10 +6906,6 @@ lodash.isarray@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/lodash.isarray/-/lodash.isarray-3.0.4.tgz#79e4eb88c36a8122af86f844aa9bcd851b5fbb55"
 
-lodash.isinteger@^4.0.4:
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/lodash.isinteger/-/lodash.isinteger-4.0.4.tgz#619c0af3d03f8b04c31f5882840b77b11cd68343"
-
 lodash.isplainobject@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz#7c526a52d89b45c45cc690b88163be0497f550cb"
@@ -6908,10 +6913,6 @@ lodash.isplainobject@^4.0.6:
 lodash.isstring@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/lodash.isstring/-/lodash.isstring-4.0.1.tgz#d527dfb5456eca7cc9bb95d5daeaf88ba54a5451"
-
-lodash.isundefined@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/lodash.isundefined/-/lodash.isundefined-3.0.1.tgz#23ef3d9535565203a66cefd5b830f848911afb48"
 
 lodash.keys@^3.0.0:
   version "3.1.2"
@@ -7872,14 +7873,11 @@ npm-run-path@^2.0.0:
     gauge "~2.7.3"
     set-blocking "~2.0.0"
 
-nsfw@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/nsfw/-/nsfw-1.2.2.tgz#95b79b6b0e311268aaa20c5c085b9f3b341b0769"
-  integrity sha512-YwoS39dkrp6loO0gvh61UbQPiOYwmbAiKqWSYuMeoSkpxxy8rbe/RVgxIJ1L+ua5usLGr0FPSo7NEQnDQOGyIw==
+nsfw@^1.2.9:
+  version "1.2.9"
+  resolved "https://registry.yarnpkg.com/nsfw/-/nsfw-1.2.9.tgz#e49ff5c12593cbcce3fcc90c533947eb4f15a99a"
+  integrity sha512-/2o89nygBRTTnGRxSHt2wjagbszyh36HlgF61Ec2iaJBTIIQ6QKcqp92EzVxxZX9U/6Qpy+LZL5i8532hXzAHg==
   dependencies:
-    fs-extra "^7.0.0"
-    lodash.isinteger "^4.0.4"
-    lodash.isundefined "^3.0.1"
     nan "^2.0.0"
 
 nugget@^2.0.1:
@@ -11583,6 +11581,13 @@ which-pm-runs@^1.0.0:
 which@1, which@^1.1.1, which@^1.2.14, which@^1.2.8, which@^1.2.9, which@^1.3.0, which@^1.3.1:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/which/-/which-1.3.1.tgz#a45043d54f5805316da8d62f9f50918d3da70b0a"
+  dependencies:
+    isexe "^2.0.0"
+
+which@^2.0.1:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/which/-/which-2.0.2.tgz#7c6a8dd0a636a0327e10b59c9286eee93f3f51b1"
+  integrity sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==
   dependencies:
     isexe "^2.0.0"
 
