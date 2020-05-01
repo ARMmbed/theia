@@ -14,8 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+// tslint:disable:no-any
+
 import { injectable, inject } from 'inversify';
 import { DisposableCollection } from '@theia/core/lib/common/disposable';
+import { LabelProvider } from '@theia/core/lib/browser';
 import { TreeModelImpl, TreeNode, TreeProps, CompositeTreeNode, SelectableTreeNode, ExpandableTreeNode } from '@theia/core/lib/browser/tree';
 import URI from '@theia/core/lib/common/uri';
 import { ScmResourceGroup, ScmResource, ScmResourceDecorations } from './scm-provider';
@@ -87,12 +90,13 @@ export class ScmTreeModel extends TreeModelImpl {
     protected readonly toDisposeOnRepositoryChange = new DisposableCollection();
 
     @inject(TreeProps) protected readonly props: ScmTreeModelProps;
+    @inject(LabelProvider) protected readonly labelProvider: LabelProvider;
 
     get languageId(): string | undefined {
         return this._languageId;
     }
 
-    protected _viewMode: 'tree' | 'list' = 'list';
+    protected _viewMode: 'tree' | 'list' = 'tree';
     set viewMode(id: 'tree' | 'list') {
         const oldSelection = this.selectedNodes;
         this._viewMode = id;
@@ -133,6 +137,7 @@ export class ScmTreeModel extends TreeModelImpl {
         }
         const root = {
             id: 'file-change-tree-root',
+            name: '<unused-name>',
             parent: undefined,
             visible: false,
             rootUri: this._provider.rootUri,
@@ -151,6 +156,7 @@ export class ScmTreeModel extends TreeModelImpl {
     protected toGroupNode(group: ScmResourceGroup, parent: CompositeTreeNode): ScmFileChangeGroupNode {
         const groupNode: ScmFileChangeGroupNode = {
             id: `${group.id}`,
+            name: group.label,
             groupId: group.id,
             groupLabel: group.label,
             parent,
@@ -227,7 +233,7 @@ export class ScmTreeModel extends TreeModelImpl {
                 }
                 folderStart = folderEnd;
             }
-        };
+        }
         return result.sort(this.compareNodes);
     }
 
@@ -264,6 +270,7 @@ export class ScmTreeModel extends TreeModelImpl {
         const oldNode = this.getNode(id);
         const folderNode: ScmFileChangeFolderNode = {
                 id,
+                name: this.labelProvider.getName(sourceUri),
                 groupId: parent.groupId,
                 path: nodeRelativePath,
                 sourceUri: String(sourceUri),
@@ -289,6 +296,7 @@ export class ScmTreeModel extends TreeModelImpl {
         const oldNode = this.getNode(id);
         const node = {
             id,
+            name: this.labelProvider.getName(resource.sourceUri),
             sourceUri: String(resource.sourceUri),
             decorations: resource.decorations,
             parent,
