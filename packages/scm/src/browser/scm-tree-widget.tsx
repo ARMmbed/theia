@@ -14,7 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-/* eslint-disable no-null/no-null, @typescript-eslint/no-explicit-any */
+// tslint:disable:no-null-keyword
+// tslint:disable:no-any
 
 import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
@@ -32,7 +33,6 @@ import { ScmContextKeyService } from './scm-context-key-service';
 import { EditorWidget } from '@theia/editor/lib/browser';
 import { EditorManager, DiffNavigatorProvider } from '@theia/editor/lib/browser';
 import { FileStat } from '@theia/filesystem/lib/common';
-import { IconThemeService } from '@theia/core/lib/browser/icon-theme-service';
 import { ScmFileChangeGroupNode, ScmFileChangeFolderNode, ScmFileChangeNode } from './scm-tree-model';
 
 @injectable()
@@ -53,9 +53,9 @@ export class ScmTreeWidget extends TreeWidget {
     @inject(CommandRegistry) protected readonly commands: CommandRegistry;
     @inject(CorePreferences) protected readonly corePreferences: CorePreferences;
     @inject(ScmContextKeyService) protected readonly contextKeys: ScmContextKeyService;
+    @inject(LabelProvider) protected readonly labelProvider: LabelProvider;
     @inject(EditorManager) protected readonly editorManager: EditorManager;
     @inject(DiffNavigatorProvider) protected readonly diffNavigatorProvider: DiffNavigatorProvider;
-    @inject(IconThemeService) protected readonly iconThemeService: IconThemeService;
 
     constructor(
         @inject(TreeProps) readonly props: TreeProps,
@@ -346,7 +346,7 @@ export class ScmTreeWidget extends TreeWidget {
             }
             this.model.selectNode(previousNode);
             previousNode = this.model.getPrevSelectableNode();
-        };
+        }
     }
 
     protected moveToNextFileNode(): ScmFileChangeNode | undefined {
@@ -358,7 +358,7 @@ export class ScmTreeWidget extends TreeWidget {
             }
             this.model.selectNode(nextNode);
             nextNode = this.model.getNextSelectableNode();
-        };
+        }
     }
 
     protected async openResource(resource: ScmResource): Promise<EditorWidget | undefined> {
@@ -391,13 +391,13 @@ export class ScmTreeWidget extends TreeWidget {
         return standaloneEditor;
     }
 
-    protected needsExpansionTogglePadding(node: TreeNode): boolean {
-        const theme = this.iconThemeService.getDefinition(this.iconThemeService.current);
-        if (theme && (theme.hidesExplorerArrows || (theme.hasFileIcons && !theme.hasFolderIcons))) {
-            return false;
-        }
-        return super.needsExpansionTogglePadding(node);
-    }
+    // protected needsExpansionTogglePadding(node: TreeNode): boolean {
+    //     const theme = this.iconThemeService.getDefinition(this.iconThemeService.current);
+    //     if (theme && (theme.hidesExplorerArrows || (theme.hasFileIcons && !theme.hasFolderIcons))) {
+    //         return false;
+    //     }
+    //     return super.needsExpansionTogglePadding(node);
+    // }
 
     storeState(): any {
         const state: object = {
@@ -463,7 +463,7 @@ export abstract class ScmElement<P extends ScmElement.Props = ScmElement.Props> 
                 this.setState({ hover });
             });
         }
-    };
+    }
     protected showHover = () => this.setState({ hover: true });
     protected hideHover = () => this.setState({ hover: false });
 
@@ -481,7 +481,7 @@ export abstract class ScmElement<P extends ScmElement.Props = ScmElement.Props> 
         } finally {
             contextKeys.scmResourceGroup.set(currentScmResourceGroup);
         }
-    };
+    }
 
     protected abstract get contextMenuPath(): MenuPath;
     protected abstract get contextMenuArgs(): any[];
@@ -542,7 +542,7 @@ export class ScmResourceComponent extends ScmElement<ScmResourceComponent.Props>
     protected open = () => {
         const selectedResource = this.props.group.resources.find(r => String(r.sourceUri) === this.props.sourceUri)!;
         selectedResource.open();
-    };
+    }
 
     protected readonly contextMenuPath = ScmTreeWidget.RESOURCE_CONTEXT_MENU;
     protected get contextMenuArgs(): any[] {
@@ -554,24 +554,14 @@ export class ScmResourceComponent extends ScmElement<ScmResourceComponent.Props>
      * Handle the single clicking of nodes present in the widget.
      */
     protected handleClick = () => {
-        // Determine the behavior based on the preference value.
-        const isSingle = this.props.corePreferences && this.props.corePreferences['workbench.list.openMode'] === 'singleClick';
-        if (isSingle) {
-            this.open();
-        }
-    };
+    }
 
     /**
      * Handle the double clicking of nodes present in the widget.
      */
     protected handleDoubleClick = () => {
-        // Determine the behavior based on the preference value.
-        const isDouble = this.props.corePreferences && this.props.corePreferences['workbench.list.openMode'] === 'doubleClick';
-        // Nodes should only be opened through double clicking if the correct preference is set.
-        if (isDouble) {
-            this.open();
-        }
-    };
+        this.open();
+    }
 }
 export namespace ScmResourceComponent {
     export interface Props extends ScmElement.Props {
@@ -725,7 +715,7 @@ export class ScmInlineAction extends React.Component<ScmInlineAction.Props> {
 
         const { commands, node, args } = this.props;
         commands.executeCommand(node.action.commandId, ...args);
-    };
+    }
 }
 export namespace ScmInlineAction {
     export interface Props {
