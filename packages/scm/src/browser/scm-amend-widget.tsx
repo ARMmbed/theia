@@ -81,6 +81,6 @@ export class ScmAmendWidget extends ReactWidget {
         if (repository) {
             repository.input.value = typeof event === 'string' ? event : event.currentTarget.value;
         }
-    };
+    }
 
 }

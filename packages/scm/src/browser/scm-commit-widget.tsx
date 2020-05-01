@@ -126,7 +126,7 @@ export class ScmCommitWidget extends ReactWidget implements StatefulWidget {
         if (repository) {
             repository.input.value = typeof event === 'string' ? event : event.currentTarget.value;
         }
-    };
+    }
 
     /**
      * Store the tree state.
@@ -144,7 +144,7 @@ export class ScmCommitWidget extends ReactWidget implements StatefulWidget {
      * @param oldState the old state object.
      */
     restoreState(oldState: object): void {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // tslint:disable-next-line:no-any
         const { message } = (oldState as any);
         if (message && this.inputRef.current) {
             this.inputRef.current.value = message;
