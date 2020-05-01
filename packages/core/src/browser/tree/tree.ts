@@ -103,6 +103,9 @@ export namespace TreeNode {
     export function isVisible(node: TreeNode | undefined): boolean {
         return !!node && (node.visible === undefined || node.visible);
     }
+    export function is(node: Object | undefined): node is TreeNode {
+        return !!node && typeof node === 'object' && 'id' in node && 'parent' in node;
+    }
 }
 
 /**

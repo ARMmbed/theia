@@ -135,7 +135,7 @@ export class ScmContribution extends AbstractViewContribution<ScmWidget> impleme
 
     registerToolbarItems(registry: TabBarToolbarRegistry): void {
         const viewModeEmitter = new Emitter<void>();
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        // tslint:disable-next-line:no-any
         const extractScmWidget = (widget: any) => {
             if (widget instanceof ViewContainer) {
                 const layout = widget.containerLayout;
@@ -158,7 +158,7 @@ export class ScmContribution extends AbstractViewContribution<ScmWidget> impleme
                     const scmWidget = extractScmWidget(widget);
                     if (scmWidget) {
                         scmWidget.viewMode = mode;
-                        viewModeEmitter.fire();
+                        viewModeEmitter.fire(undefined);
                     }
                 },
                 isVisible: widget => {
