@@ -120,7 +120,7 @@ export class ScmCommitWidget extends ReactWidget implements StatefulWidget {
         if (repository) {
             repository.input.value = typeof event === 'string' ? event : event.currentTarget.value;
         }
-    };
+    }
 
     /**
      * Store the tree state.
