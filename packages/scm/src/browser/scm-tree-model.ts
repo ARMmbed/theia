@@ -38,6 +38,7 @@ export interface ScmFileChangeRootNode extends CompositeTreeNode {
 
 export interface ScmFileChangeGroupNode extends ExpandableTreeNode {
     groupId: string;
+    groupLabel: string;
     children: (ScmFileChangeFolderNode | ScmFileChangeNode)[];
 }
 
@@ -149,6 +150,7 @@ export class ScmTreeModel extends TreeModelImpl {
             id: `${group.id}`,
             name: group.label,
             groupId: group.id,
+            groupLabel: group.label,
             parent,
             children: [],
             expanded: true,
