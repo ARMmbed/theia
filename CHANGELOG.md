@@ -1,5 +1,11 @@
 # Change Log
 
+## v1.2.0
+
+Breaking changes:
+
+- [scm] support file tree mode in Source Control view.  Classes that extend ScmWidget will likely require changes [#7505](https://github.com/eclipse-theia/theia/pull/7505)
+
 ## v0.12.0
 
 - [cli] added explicit `yargs` dependency [#6443](https://github.com/eclipse-theia/theia/pull/6443)
