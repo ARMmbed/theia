@@ -188,6 +188,8 @@ export interface PluginManagerExt {
     $updateStoragePath(path: string | undefined): Promise<void>;
 
     $activateByEvent(event: string): Promise<void>;
+
+    $activatePlugin(id: string): Promise<void>;
 }
 
 export interface CommandRegistryMain {
