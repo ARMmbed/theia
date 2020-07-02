@@ -151,6 +151,14 @@ export class HostedPluginSupport {
     protected readonly onDidChangePluginsEmitter = new Emitter<void>();
     readonly onDidChangePlugins = this.onDidChangePluginsEmitter.event;
 
+    protected readonly deferredDidStart = new Deferred<void>();
+    /**
+     * Resolves when the initial plugins are started.
+     */
+    get didStart(): Promise<void> {
+        return this.deferredDidStart.promise;
+    }
+
     @postConstruct()
     protected init(): void {
         this.theiaReadyPromise = Promise.all([this.preferenceServiceImpl.ready, this.workspaceService.roots]);
@@ -241,6 +249,9 @@ export class HostedPluginSupport {
             return;
         }
         await this.startPlugins(contributionsByHost, toDisconnect);
+
+        this.deferredDidStart.resolve();
+
         this.restoreWebviews();
     }
 
@@ -574,6 +585,14 @@ export class HostedPluginSupport {
         if (promises.length && await Promise.all(promises).then(exists => exists.some(v => v))) {
             await activatePlugin();
         }
+    }
+
+    async activatePlugin(id: string): Promise<void> {
+        const activation = [];
+        for (const manager of this.managers.values()) {
+            activation.push(manager.$activatePlugin(id));
+        }
+        await Promise.all(activation);
     }
 
     protected createMeasurement(name: string): () => number {
