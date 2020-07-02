@@ -84,6 +84,7 @@ export class PluginManagerExtImpl implements PluginManagerExt, PluginManager {
         'onWebviewPanel'
     ]);
 
+    private configStorage: ConfigStorage | undefined;
     private readonly registry = new Map<string, Plugin>();
     private readonly activations = new Map<string, (() => Promise<void>)[] | undefined>();
     /** promises to whether loading each plugin has been successful */
@@ -196,6 +197,8 @@ export class PluginManagerExtImpl implements PluginManagerExt, PluginManager {
     }
 
     async $start(params: PluginManagerStartParams): Promise<void> {
+        this.configStorage = params.configStorage;
+
         const [plugins, foreignPlugins] = await this.host.init(params.plugins);
         // add foreign plugins
         for (const plugin of foreignPlugins) {
@@ -297,6 +300,10 @@ export class PluginManagerExtImpl implements PluginManagerExt, PluginManager {
     }
 
     async $updateStoragePath(path: string | undefined): Promise<void> {
+        if (this.configStorage) {
+            this.configStorage.hostStoragePath = path;
+        }
+
         this.pluginContextsMap.forEach((pluginContext: theia.PluginContext, pluginId: string) => {
             pluginContext.storagePath = path ? join(path, pluginId) : undefined;
         });
@@ -310,6 +317,13 @@ export class PluginManagerExtImpl implements PluginManagerExt, PluginManager {
         this.activations.set(activationEvent, undefined);
         while (activations.length) {
             await activations.pop()!();
+        }
+    }
+
+    async $activatePlugin(id: string): Promise<void> {
+        const plugin = this.registry.get(id);
+        if (plugin && this.configStorage) {
+            await this.loadPlugin(plugin, this.configStorage);
         }
     }
 
