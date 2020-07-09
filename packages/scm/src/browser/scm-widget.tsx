@@ -136,6 +136,7 @@ export class ScmWidget extends BaseWidget implements StatefulWidget {
 
     protected onActivateRequest(msg: Message): void {
         super.onActivateRequest(msg);
+        this.refresh();
         this.commitWidget.focus();
     }
 
