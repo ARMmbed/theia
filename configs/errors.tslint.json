@@ -33,7 +33,7 @@
     ],
     "max-line-length": [
       true,
-      180
+      250
     ],
     "no-any": true,
     "no-consecutive-blank-lines": true,
