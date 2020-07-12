@@ -613,9 +613,7 @@ export class DugiteGit implements Git {
             let opts = {};
             if (options) {
                 opts = {
-                    ...options,
-                    successExitCodes: options.successExitCodes ? new Set(options.successExitCodes) : undefined,
-                    expectedErrors: options.expectedErrors ? new Set(options.expectedErrors) : undefined,
+                    ...options
                 };
                 if (options.successExitCodes) {
                     opts = { ...opts, successExitCodes: new Set(options.successExitCodes) };
@@ -626,7 +624,6 @@ export class DugiteGit implements Git {
             }
             opts = {
                 ...opts,
-
                 exec,
                 env
             };
