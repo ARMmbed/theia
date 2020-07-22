@@ -135,8 +135,10 @@ export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
             },
             ...this.options.nsfwOptions
         });
+        const startTime = Date.now();
+        this.options.info('Starting watching:', basePath);
         await watcher.start();
-        this.options.info('Started watching:', basePath);
+        this.options.info(`Started watching: ${basePath}, in ${(Date.now() - startTime) / 1000}s`);
         if (toDisposeWatcher.disposed) {
             this.debug('Stopping watching:', basePath);
             await watcher.stop();
