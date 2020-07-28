@@ -13,6 +13,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { inject, injectable, postConstruct } from 'inversify';
 import { Emitter } from '@theia/core/lib/common/event';
 import { find } from '@phosphor/algorithm';
