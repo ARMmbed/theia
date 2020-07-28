@@ -14,8 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-// tslint:disable:no-null-keyword
-// tslint:disable:no-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as React from 'react';
 import { injectable, inject } from 'inversify';
@@ -446,7 +445,7 @@ export abstract class ScmElement<P extends ScmElement.Props = ScmElement.Props> 
                 this.setState({ hover });
             });
         }
-    }
+    };
     protected showHover = () => this.setState({ hover: true });
     protected hideHover = () => this.setState({ hover: false });
 
@@ -464,7 +463,7 @@ export abstract class ScmElement<P extends ScmElement.Props = ScmElement.Props> 
         } finally {
             contextKeys.scmResourceGroup.set(currentScmResourceGroup);
         }
-    }
+    };
 
     /*
      * Normally the group would always be expected to be found.  However if the tree is restored
@@ -541,7 +540,7 @@ export class ScmResourceComponent extends ScmElement<ScmResourceComponent.Props>
             const selectedResource = group.resources.find(r => String(r.sourceUri) === this.props.sourceUri)!;
             selectedResource.open();
         }
-    }
+    };
 
     protected readonly contextMenuPath = ScmTreeWidget.RESOURCE_CONTEXT_MENU;
     protected get contextMenuArgs(): any[] {
@@ -559,14 +558,14 @@ export class ScmResourceComponent extends ScmElement<ScmResourceComponent.Props>
      * Handle the single clicking of nodes present in the widget.
      */
     protected handleClick = () => {
-    }
+    };
 
     /**
      * Handle the double clicking of nodes present in the widget.
      */
     protected handleDoubleClick = () => {
         this.open();
-    }
+    };
 }
 export namespace ScmResourceComponent {
     export interface Props extends ScmElement.Props {
@@ -735,7 +734,7 @@ export class ScmInlineAction extends React.Component<ScmInlineAction.Props> {
 
         const { commands, node, args } = this.props;
         commands.executeCommand(node.action.commandId, ...args);
-    }
+    };
 }
 export namespace ScmInlineAction {
     export interface Props {
