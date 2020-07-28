@@ -14,6 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { injectable, inject } from 'inversify';
 import { Message } from '@phosphor/messaging';
 import * as React from 'react';
@@ -120,7 +122,7 @@ export class ScmCommitWidget extends ReactWidget implements StatefulWidget {
         if (repository) {
             repository.input.value = typeof event === 'string' ? event : event.currentTarget.value;
         }
-    }
+    };
 
     /**
      * Store the tree state.
