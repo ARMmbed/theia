@@ -160,10 +160,6 @@ app.on('ready', () => {
         globalShortcut.register('CmdOrCtrl+R', () => {});
     }
 
-    // Explicitly set the app name to have better menu items on macOS. ("About", "Hide", and "Quit")
-    // See: https://github.com/electron-userland/electron-builder/issues/2468
-    app.setName(applicationName);
-
     const { screen } = electron;
 
     // Remove the default electron menus, waiting for the application to set its own.
