@@ -453,9 +453,6 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         registry.registerMenuAction(CommonMenus.FILE_SETTINGS_SUBMENU_THEME, {
             commandId: CommonCommands.SELECT_COLOR_THEME.id
         });
-        registry.registerMenuAction(CommonMenus.FILE_SETTINGS_SUBMENU_THEME, {
-            commandId: CommonCommands.SELECT_ICON_THEME.id
-        });
     }
 
     registerCommands(commandRegistry: CommandRegistry): void {
