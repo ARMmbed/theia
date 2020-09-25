@@ -14,15 +14,24 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { inject, injectable } from 'inversify';
+import { inject, injectable, postConstruct } from 'inversify';
 import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient';
 import URI from '@theia/core/lib/common/uri';
 import { ResourceProvider, ReferenceCollection, Event } from '@theia/core';
 import { EditorPreferences, EditorPreferenceChange } from '@theia/editor/lib/browser';
 import { MonacoEditorModel } from './monaco-editor-model';
+import { Deferred } from '@theia/core/lib/common/promise-util';
+import { ApplicationServer } from '@theia/core/lib/common/application-protocol';
+import { OS } from '@theia/core/lib/common';
 
 @injectable()
 export class MonacoTextModelService implements monaco.editor.ITextModelService {
+
+    protected readonly _ready = new Deferred<void>();
+    /**
+     * This component does some asynchronous work before being fully initialized.
+     */
+    readonly ready: Promise<void> = this._ready.promise;
 
     protected readonly _models = new ReferenceCollection<string, MonacoEditorModel>(
         uri => this.loadModel(new URI(uri))
@@ -39,6 +48,34 @@ export class MonacoTextModelService implements monaco.editor.ITextModelService {
 
     @inject(ProtocolToMonacoConverter)
     protected readonly p2m: ProtocolToMonacoConverter;
+
+    @inject(ApplicationServer)
+    protected readonly applicationServer!: ApplicationServer;
+
+    @postConstruct()
+    public init(): void {
+        let isWindowsBackend = false;
+
+        this.applicationServer.getBackendOS().then(os => {
+            isWindowsBackend = os === OS.Type.Windows;
+        }, () => undefined).then(() => this._ready.resolve());
+
+        const staticServices = monaco.services.StaticServices;
+
+        if (staticServices.resourcePropertiesService) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const original = staticServices.resourcePropertiesService.get() as any;
+            original.getEOL = () => {
+                const eol = this.editorPreferences['files.eol'];
+                if (eol) {
+                    if (eol !== 'auto') {
+                        return eol;
+                    }
+                }
+                return isWindowsBackend ? '\r\n' : '\n';
+            };
+        }
+    }
 
     get models(): MonacoEditorModel[] {
         return this._models.values();
@@ -57,6 +94,7 @@ export class MonacoTextModelService implements monaco.editor.ITextModelService {
     }
 
     protected async loadModel(uri: URI): Promise<MonacoEditorModel> {
+        await this.ready;
         await this.editorPreferences.ready;
         const resource = await this.resourceProvider(uri);
         const model = await (new MonacoEditorModel(resource, this.m2p, this.p2m, { encoding: this.editorPreferences.get('files.encoding') }).load());
