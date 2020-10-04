@@ -299,7 +299,7 @@ export class WorkspaceCommandContribution implements CommandContribution {
                         if (fileName) {
                             const oldUri = uri;
                             const newUri = uri.parent.resolve(fileName);
-                            this.fileSystem.move(oldUri.toString(), newUri.toString());
+                            this.fileSystem.move(oldUri.toString(), newUri.toString(), { overwrite: true });
                         }
                     }
                 });
