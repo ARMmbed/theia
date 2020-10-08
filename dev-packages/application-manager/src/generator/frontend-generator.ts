@@ -136,6 +136,8 @@ const { join, resolve } = require('path');
 const { fork } = require('child_process');
 const { app, dialog, shell, BrowserWindow, ipcMain, Menu, globalShortcut } = electron;
 const { ElectronSecurityToken } = require('@theia/core/lib/electron-common/electron-token');
+const { writeFileSync } from 'fs';
+const { homedir } from 'os';
 
 const applicationName = \`${this.pck.props.frontend.config.applicationName}\`;
 const isSingleInstance = ${this.pck.props.backend.config.singleInstance === true ? 'true' : 'false'};
@@ -388,7 +390,7 @@ app.on('ready', () => {
             loadMainWindow(address.port);
         });
         cp.on('error', (error) => {
-            console.error(error);
+            writeFileSync(resolve(homedir(), studio-log.txt), error, { flag: 'a+' });
             app.exit(1);
         });
         app.on('quit', () => {
