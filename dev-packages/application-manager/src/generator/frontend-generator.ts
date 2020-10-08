@@ -136,8 +136,8 @@ const { join, resolve } = require('path');
 const { fork } = require('child_process');
 const { app, dialog, shell, BrowserWindow, ipcMain, Menu, globalShortcut } = electron;
 const { ElectronSecurityToken } = require('@theia/core/lib/electron-common/electron-token');
-const { writeFileSync } from 'fs';
-const { homedir } from 'os';
+const { writeFileSync } = require('fs');
+const { homedir } = require('os');
 
 const applicationName = \`${this.pck.props.frontend.config.applicationName}\`;
 const isSingleInstance = ${this.pck.props.backend.config.singleInstance === true ? 'true' : 'false'};
