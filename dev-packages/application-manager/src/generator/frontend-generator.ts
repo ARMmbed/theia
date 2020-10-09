@@ -124,9 +124,11 @@ if (process.env.LC_ALL) {
 }
 process.env.LC_NUMERIC = 'C';
 
+const { v4 } = require('uuid');
 const electron = require('electron');
 const { join, resolve } = require('path');
 const { fork } = require('child_process');
+const { ElectronSecurityToken } = require('@theia/core/lib/electron-common/electron-token');
 const { app, dialog, shell, BrowserWindow, ipcMain, Menu } = electron;
 
 const applicationName = \`${this.pck.props.frontend.config.applicationName}\`;
@@ -141,6 +143,12 @@ if (isSingleInstance && !app.requestSingleInstanceLock()) {
 const nativeKeymap = require('native-keymap');
 const Storage = require('electron-store');
 const electronStore = new Storage();
+
+const electronSecurityToken = {
+    value: v4(),
+};
+// Make it easy for renderer process to fetch the ElectronSecurityToken:
+global[ElectronSecurityToken] = electronSecurityToken;
 
 app.on('ready', () => {
     const { screen } = electron;
@@ -283,6 +291,23 @@ app.on('ready', () => {
         })
     }
 
+    const setElectronSecurityToken = port => {
+        return new Promise((resolve, reject) => {
+            electron.session.defaultSession.cookies.set({
+                url: \`http://localhost:\${port}/\`,
+                name: ElectronSecurityToken,
+                value: JSON.stringify(electronSecurityToken),
+                httpOnly: true,
+            }, error => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        })
+    }
+
     const loadMainWindow = (port) => {
         if (!mainWindow.isDestroyed()) {
             mainWindow.loadURL('file://' + join(__dirname, '../../lib/index.html') + '?port=' + port);
@@ -314,9 +339,15 @@ app.on('ready', () => {
             app.exit(1);
         });
     } else {
-        const cp = fork(mainPath, [], { env: Object.assign({}, process.env) });
-        cp.on('message', (message) => {
-            loadMainWindow(message);
+        // We want to pass flags passed to the Electron app to the backend process.
+        // Quirk: When developing from sources, we execute Electron as \`electron.exe electron-main.js ...args\`, but when bundled,
+        // the command looks like \`bundled-application.exe ...args\`.
+        const cp = fork(mainPath, process.argv.slice(devMode ? 2 : 1), { env: Object.assign({
+            [ElectronSecurityToken]: JSON.stringify(electronSecurityToken),
+        }, process.env) });
+        cp.on('message', async (address) => {
+            await setElectronSecurityToken(address.port);
+            loadMainWindow(address.port);
         });
         cp.on('error', (error) => {
             console.error(error);
