@@ -136,6 +136,7 @@ const { join, resolve } = require('path');
 const { fork } = require('child_process');
 const { app, dialog, shell, BrowserWindow, ipcMain, Menu, globalShortcut } = electron;
 const { ElectronSecurityToken } = require('@theia/core/lib/electron-common/electron-token');
+const { isOSX } = require('@theia/core/lib/common/os');
 
 const applicationName = \`${this.pck.props.frontend.config.applicationName}\`;
 const isSingleInstance = ${this.pck.props.backend.config.singleInstance === true ? 'true' : 'false'};
@@ -159,6 +160,27 @@ const electronSecurityToken = {
 
 // Make it easy for renderer process to fetch the ElectronSecurityToken:
 global[ElectronSecurityToken] = electronSecurityToken;
+
+// This is a temporary hack (not for upstreaming) for getting URLs to open on macOS when the application
+// is not open. This can be fixed properly in Theia 1.5 as we can utilize the ElectronMainApplication
+// class and override the hookApplicationEventsMethod:
+// https://github.com/eclipse-theia/theia/blob/v1.5.0/packages/core/src/electron-main/electron-main-application.ts#L446
+if (isOSX) {
+    const readyForUrls = new Promise(resolve => {
+        ipcMain.on('mbs-ready-for-urls', () => {
+            resolve();
+        });
+    });
+
+    app.on('will-finish-launching', () => {
+        app.on('open-url', async (event, url) => {
+            event.preventDefault();
+            await readyForUrls;
+            const currentWindow = BrowserWindow.getFocusedWindow();
+            currentWindow.webContents.send('mbs-open-url', url);
+        });
+    });
+}
 
 app.on('ready', () => {
 
