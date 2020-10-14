@@ -36,7 +36,7 @@ export class PreferenceTreeGenerator {
         const root = this.createRootNode(preferencesGroups);
 
         for (const propertyName of propertyNames) {
-            if (!this.preferenceConfigs.isSectionName(propertyName) && !overridePropertyIdentifier.test(propertyName)) {
+            if (!this.preferenceConfigs.isSectionName(propertyName) && !overridePropertyIdentifier.test(propertyName) && !preferencesSchema.properties[propertyName].hidden) {
                 const labels = propertyName.split('.');
                 const group = labels[0];
                 const subgroup = labels.length > 2 && labels.slice(0, 2).join('.');
