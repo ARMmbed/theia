@@ -20,12 +20,16 @@ import { ContributionProvider, bindContributionProvider, Emitter, Event, Disposa
 import { PreferenceScope } from './preference-scope';
 import { PreferenceProvider, PreferenceProviderDataChange } from './preference-provider';
 import {
-    PreferenceSchema, PreferenceSchemaProperties, PreferenceDataSchema, PreferenceItem, PreferenceSchemaProperty, PreferenceDataProperty, JsonType
+    PreferenceSchema, PreferenceSchemaProperties, PreferenceDataSchema, PreferenceItem, PreferenceSchemaProperty, PreferenceDataProperty, JsonType,
+    PreferenceSchemaModification, PreferenceSchemaPropertyModifications, PreferenceSchemaPropertyModification
 } from '../../common/preferences/preference-schema';
 import { FrontendApplicationConfigProvider } from '../frontend-application-config-provider';
 import { FrontendApplicationConfig } from '@theia/application-package/lib/application-props';
 import { bindPreferenceConfigurations, PreferenceConfigurations } from './preference-configurations';
-export { PreferenceSchema, PreferenceSchemaProperties, PreferenceDataSchema, PreferenceItem, PreferenceSchemaProperty, PreferenceDataProperty, JsonType };
+export {
+    PreferenceSchema, PreferenceSchemaProperties, PreferenceDataSchema, PreferenceItem, PreferenceSchemaProperty, PreferenceDataProperty, JsonType,
+    PreferenceSchemaModification
+};
 import { Mutable } from '../../common/types';
 import { OverridePreferenceName, PreferenceLanguageOverrideService } from './preference-language-override-service';
 
@@ -66,11 +70,17 @@ export interface PreferenceContribution {
     readonly schema: PreferenceSchema;
 }
 
+export const PreferenceModificationContribution = Symbol('PreferenceModificationContribution');
+export interface PreferenceModificationContribution {
+    readonly schemaModification: PreferenceSchemaModification;
+}
+
 export function bindPreferenceSchemaProvider(bind: interfaces.Bind): void {
     bindPreferenceConfigurations(bind);
     bind(PreferenceSchemaProvider).toSelf().inSingletonScope();
     bind(PreferenceLanguageOverrideService).toSelf().inSingletonScope();
     bindContributionProvider(bind, PreferenceContribution);
+    bindContributionProvider(bind, PreferenceModificationContribution);
 }
 
 /**
@@ -100,9 +110,13 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
     protected readonly combinedSchema: PreferenceDataSchema = { properties: {}, patternProperties: {} };
     protected readonly workspaceSchema: PreferenceDataSchema = { properties: {}, patternProperties: {} };
     protected readonly folderSchema: PreferenceDataSchema = { properties: {}, patternProperties: {} };
+    protected readonly modifications: PreferenceSchemaPropertyModifications = {};
 
     @inject(ContributionProvider) @named(PreferenceContribution)
     protected readonly preferenceContributions: ContributionProvider<PreferenceContribution>;
+
+    @inject(ContributionProvider) @named(PreferenceModificationContribution)
+    protected readonly preferenceModificationContributions: ContributionProvider<PreferenceModificationContribution>;
 
     @inject(PreferenceConfigurations)
     protected readonly configurations: PreferenceConfigurations;
@@ -116,6 +130,9 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
     @postConstruct()
     protected init(): void {
         this.readConfiguredPreferences();
+        this.preferenceModificationContributions.getContributions().forEach(contrib => {
+            this.doSetSchemaModification(contrib.schemaModification);
+        });
         this.preferenceContributions.getContributions().forEach(contrib => {
             this.doSetSchema(contrib.schema);
         });
@@ -212,20 +229,21 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
                 }
                 this.updateSchemaProps(preferenceName, schemaProps);
 
-                const schemaDefault = this.getDefaultValue(schemaProps);
+                const modifiedProperties = this.schema(preferenceName, schemaProps);
+                const schemaDefault = this.getDefaultValue(modifiedProperties);
                 const configuredDefault = this.getConfiguredDefault(preferenceName);
                 if (this.preferenceOverrideService.testOverrideValue(preferenceName, schemaDefault)) {
-                    schemaProps.defaultValue = PreferenceSchemaProperties.is(configuredDefault)
+                    modifiedProperties.defaultValue = PreferenceSchemaProperties.is(configuredDefault)
                         ? PreferenceProvider.merge(schemaDefault, configuredDefault)
                         : schemaDefault;
-                    for (const overriddenPreferenceName in schemaProps.defaultValue) {
+                    for (const overriddenPreferenceName in modifiedProperties.defaultValue) {
                         const overrideValue = schemaDefault[overriddenPreferenceName];
                         const overridePreferenceName = `${preferenceName}.${overriddenPreferenceName}`;
                         changes.push(this.doSetPreferenceValue(overridePreferenceName, overrideValue, { scope, domain }));
                     }
                 } else {
                     schemaProps.defaultValue = configuredDefault === undefined ? schemaDefault : configuredDefault;
-                    changes.push(this.doSetPreferenceValue(preferenceName, schemaProps.defaultValue, { scope, domain }));
+                    changes.push(this.doSetPreferenceValue(preferenceName, modifiedProperties.defaultValue, { scope, domain }));
                 }
             }
         }
@@ -273,8 +291,66 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
         }
     }
 
+    protected doSetSchemaModification(schemaModification: PreferenceSchemaModification): void {
+        for (const preferenceName of Object.keys(schemaModification.properties)) {
+            const modifiableProperties = this.combinedSchema.properties[preferenceName];
+            const previousModifications = this.modifications[preferenceName] ?? {};
+            const newModifications: PreferenceSchemaPropertyModification = schemaModification.properties[preferenceName];
+            this.modifications[preferenceName] = { ...previousModifications, ...newModifications };
+
+            // Validate that the modifications only constrain the schema, cannot allow extra values
+            const modifiedEnum = newModifications.enum;
+            if (modifiedEnum !== undefined) {
+                if (modifiableProperties) {
+                    if (modifiableProperties.type !== 'string') {
+                        console.warn(`Override of preference ${preferenceName} cannot constrain to enum values because the property is not string type.`);
+                        continue;
+                    }
+                    if (modifiableProperties.enum && modifiableProperties.enum.some(v => !modifiedEnum.some(v2 => v2 === v))) {
+                        console.warn(`Override of preference enum ${preferenceName} cannot add enum values, it can only constrain the set of values.`);
+                        continue;
+                    }
+                }
+            }
+            const modifiedMinimum = newModifications.minimum;
+            if (modifiedMinimum !== undefined) {
+                if (modifiableProperties) {
+                    if (modifiableProperties.minimum && modifiedMinimum < modifiableProperties.minimum) {
+                        console.warn(`Override of preference minimum ${preferenceName} cannot reduce the minimum, it can only increase it.`);
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    protected schema(preferenceName: string, propertySchema: PreferenceDataProperty): PreferenceDataProperty {
+        const modifications = this.modifications[preferenceName];
+        return modifications ? { ...propertySchema, ...modifications } : propertySchema;
+    }
+
     getCombinedSchema(): PreferenceDataSchema {
-        return this.combinedSchema;
+        const properties: { [key: string]: PreferenceDataProperty; } = {};
+        for (const preferenceName of Object.keys(this.combinedSchema.properties)) {
+            const value = this.combinedSchema.properties[preferenceName];
+            const modifications = this.modifications[preferenceName];
+            if (modifications) {
+                if (!modifications.hidden) {
+                    const modifiedValue = this.schema(preferenceName, value);
+                    properties[preferenceName] = modifiedValue;
+                }
+            } else {
+                properties[preferenceName] = value;
+            }
+        }
+        return { ...this.combinedSchema, properties };
+    }
+
+    getPropertySchema(preferenceName: string): PreferenceDataProperty | undefined {
+        const property = this.combinedSchema.properties[preferenceName];
+        if (property) {
+            return this.schema(preferenceName, property);
+        }
     }
 
     getSchema(scope: PreferenceScope): PreferenceDataSchema {
@@ -327,10 +403,10 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
             }
             if (!property) {
                 // try from overridden value
-                property = this.combinedSchema.properties[overridden.preferenceName];
+                property = this.getPropertySchema(overridden.preferenceName);
             }
         } else {
-            property = this.combinedSchema.properties[preferenceName];
+            property = this.getPropertySchema(preferenceName);
         }
         return property && property.scope! >= scope;
     }
@@ -345,7 +421,7 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
     }
 
     getOverridePreferenceNames(preferenceName: string): IterableIterator<string> {
-        const preference = this.combinedSchema.properties[preferenceName];
+        const preference = this.getPropertySchema(preferenceName);
         if (preference && preference.overridable) {
             return this.preferenceOverrideService.getOverridePreferenceNames(preferenceName);
         }
@@ -410,5 +486,10 @@ export class PreferenceSchemaProvider extends PreferenceProvider {
      */
     overriddenPreferenceName(name: string): OverridePreferenceName | undefined {
         return this.preferenceOverrideService.overriddenPreferenceName(name);
+    }
+
+    isPropertyHidden(preferenceName: string): boolean {
+        const modifications = this.modifications[preferenceName];
+        return modifications && !!modifications.hidden;
     }
 }
