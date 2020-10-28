@@ -24,6 +24,7 @@ import { ContributedTaskConfiguration, TaskConfiguration } from '@theia/task/lib
 import { TaskDefinitionRegistry } from '@theia/task/lib/browser/task-definition-registry';
 import { ProblemMatcherRegistry } from '@theia/task/lib/browser/task-problem-matcher-registry';
 import { ProblemPatternRegistry } from '@theia/task/lib/browser/task-problem-pattern-registry';
+import { cppPreferencesSchema } from './cpp-preferences';
 
 /**
  * Representation of a C/C++ build task configuration.
@@ -174,7 +175,8 @@ export class CppTaskProvider implements TaskContribution, TaskProvider, TaskReso
             source: 'cpp',
             properties: {
                 required: ['label'],
-                all: ['label']
+                all: ['label'],
+                schema: cppPreferencesSchema
             }
         });
     }

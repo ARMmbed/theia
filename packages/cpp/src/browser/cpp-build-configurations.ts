@@ -34,7 +34,7 @@ export { CppBuildConfiguration };
  *
  * @returns `true` if the argument is a C/C++ build configuration.
  */
-// tslint:disable-next-line:no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isCppBuildConfiguration(arg: any): arg is CppBuildConfiguration {
     return arg.name !== undefined && arg.directory !== undefined;
 }
@@ -251,7 +251,7 @@ export class CppBuildConfigurationManagerImpl implements CppBuildConfigurationMa
      * Update the active build configuration if applicable.
      */
     protected async handlePreferencesUpdate(): Promise<void> {
-        // tslint:disable:no-any
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         const roots = this.workspaceService.tryGetRoots();
 
         // Resolve variables for all configurations.
@@ -282,7 +282,7 @@ export class CppBuildConfigurationManagerImpl implements CppBuildConfigurationMa
                 this.setActiveConfig(undefined, root);
             }
         }
-        // tslint:enable:no-any
+        /* eslint-disable @typescript-eslint/no-explicit-any */
     }
 
     /**

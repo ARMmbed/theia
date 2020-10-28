@@ -36,7 +36,7 @@ export class CppBuildConfigurationServerImpl implements CppBuildConfigurationSer
     async getMergedCompilationDatabase(params: { directories: string[] }): Promise<string> {
         const directories = params.directories.sort();
         const hash = crypto.createHash('sha256');
-        // tslint:disable-next-line:no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const entries: any = [];
 
         for (const directory of directories) {

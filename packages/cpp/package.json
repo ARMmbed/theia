@@ -42,6 +42,7 @@
     "src"
   ],
   "scripts": {
+    "lint": "theiaext lint",
     "prepare": "yarn run clean && yarn run build",
     "clean": "theiaext clean",
     "build": "theiaext build",
