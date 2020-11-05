@@ -14,14 +14,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { inject, injectable, named } from 'inversify';
+import { inject, injectable, named, postConstruct } from 'inversify';
 import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient';
 import URI from '@theia/core/lib/common/uri';
-import { ResourceProvider, ReferenceCollection, Event, MaybePromise, Resource, ContributionProvider } from '@theia/core';
+import { ResourceProvider, ReferenceCollection, Event, MaybePromise, Resource, ContributionProvider, OS } from '@theia/core';
 import { EditorPreferences, EditorPreferenceChange } from '@theia/editor/lib/browser';
 import { MonacoEditorModel } from './monaco-editor-model';
 import IReference = monaco.editor.IReference;
 export { IReference };
+import { Deferred } from '@theia/core/lib/common/promise-util';
+import { ApplicationServer } from '@theia/core/lib/common/application-protocol';
 
 export const MonacoEditorModelFactory = Symbol('MonacoEditorModelFactory');
 export interface MonacoEditorModelFactory {
@@ -37,6 +39,12 @@ export interface MonacoEditorModelFactory {
 
 @injectable()
 export class MonacoTextModelService implements monaco.editor.ITextModelService {
+
+    protected readonly _ready = new Deferred<void>();
+    /**
+     * This component does some asynchronous work before being fully initialized.
+     */
+    readonly ready: Promise<void> = this._ready.promise;
 
     protected readonly _models = new ReferenceCollection<string, MonacoEditorModel>(
         uri => this.loadModel(new URI(uri))
@@ -57,6 +65,33 @@ export class MonacoTextModelService implements monaco.editor.ITextModelService {
     @inject(ContributionProvider)
     @named(MonacoEditorModelFactory)
     protected readonly factories: ContributionProvider<MonacoEditorModelFactory>;
+    @inject(ApplicationServer)
+    protected readonly applicationServer!: ApplicationServer;
+
+    @postConstruct()
+    public init(): void {
+        let isWindowsBackend = false;
+
+        this.applicationServer.getBackendOS().then(os => {
+            isWindowsBackend = os === OS.Type.Windows;
+        }, () => undefined).then(() => this._ready.resolve());
+
+        const staticServices = monaco.services.StaticServices;
+
+        if (staticServices.resourcePropertiesService) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const original = staticServices.resourcePropertiesService.get() as any;
+            original.getEOL = () => {
+                const eol = this.editorPreferences['files.eol'];
+                if (eol) {
+                    if (eol !== 'auto') {
+                        return eol;
+                    }
+                }
+                return isWindowsBackend ? '\r\n' : '\n';
+            };
+        }
+    }
 
     get models(): MonacoEditorModel[] {
         return this._models.values();
@@ -75,6 +110,7 @@ export class MonacoTextModelService implements monaco.editor.ITextModelService {
     }
 
     protected async loadModel(uri: URI): Promise<MonacoEditorModel> {
+        await this.ready;
         await this.editorPreferences.ready;
         const resource = await this.resourceProvider(uri);
         const model = await (await this.createModel(resource)).load();
