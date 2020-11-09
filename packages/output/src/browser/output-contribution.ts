@@ -14,16 +14,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { injectable } from 'inversify';
+import { injectable, inject } from 'inversify';
 import URI from '@theia/core/lib/common/uri';
 import { Widget } from '@theia/core/lib/browser/widgets/widget';
 import { MaybePromise } from '@theia/core/lib/common/types';
-import { CommonCommands, quickCommand, OpenHandler, OpenerOptions } from '@theia/core/lib/browser';
+import { CommonCommands, quickCommand, OpenHandler, OpenerOptions, OpenerService, open } from '@theia/core/lib/browser';
 import { Command, CommandRegistry, MenuModelRegistry } from '@theia/core/lib/common';
 import { AbstractViewContribution } from '@theia/core/lib/browser/shell/view-contribution';
+import { OutputChannelManager, OutputChannel } from '../common/output-channel';
 import { OutputWidget } from './output-widget';
 import { OutputContextMenu } from './output-context-menu';
 import { OutputUri } from '../common/output-uri';
+import { QuickPickService, QuickPickItem } from '@theia/core/lib/common/quick-pick-service';
 
 export namespace OutputCommands {
 
@@ -105,6 +107,15 @@ export namespace OutputCommands {
 @injectable()
 export class OutputContribution extends AbstractViewContribution<OutputWidget> implements OpenHandler {
 
+    @inject(OutputChannelManager)
+    protected readonly outputChannelManager: OutputChannelManager;
+
+    @inject(OpenerService)
+    protected readonly openerService: OpenerService;
+
+    @inject(QuickPickService)
+    protected readonly quickPickService: QuickPickService;
+
     readonly id: string = `${OutputWidget.ID}-opener`;
 
     constructor() {
@@ -159,6 +170,109 @@ export class OutputContribution extends AbstractViewContribution<OutputWidget> i
                 return true;
             })
         });
+        registry.registerCommand(OutputCommands.APPEND, {
+            execute: ({ name, text }: { name: string, text: string }) => {
+                if (name && text) {
+                    this.outputChannelManager.getChannel(name).append(text);
+                }
+            }
+        });
+        registry.registerCommand(OutputCommands.APPEND_LINE, {
+            execute: ({ name, text }: { name: string, text: string }) => {
+                if (name && text) {
+                    this.outputChannelManager.getChannel(name).appendLine(text);
+                }
+            }
+        });
+        registry.registerCommand(OutputCommands.CLEAR, {
+            execute: ({ name }: { name: string }) => {
+                if (name) {
+                    this.outputChannelManager.getChannel(name).clear();
+                }
+            }
+        });
+        registry.registerCommand(OutputCommands.DISPOSE, {
+            execute: ({ name }: { name: string }) => {
+                if (name) {
+                    this.outputChannelManager.deleteChannel(name);
+                }
+            }
+        });
+        registry.registerCommand(OutputCommands.SHOW, {
+            execute: ({ name, options }: { name: string, options?: { preserveFocus?: boolean } }) => {
+                if (name) {
+                    // Not just show on the UI but make sure the visible flag was flipped.
+                    this.outputChannelManager.getChannel(name).show();
+                    const preserveFocus = options && !!options.preserveFocus;
+                    const activate = !preserveFocus;
+                    const reveal = preserveFocus;
+                    open(this.openerService, OutputUri.create(name), { activate, reveal });
+                }
+            }
+        });
+        registry.registerCommand(OutputCommands.HIDE, {
+            execute: ({ name }: { name: string }) => {
+                if (name) {
+                    this.outputChannelManager.getChannel(name).hide();
+                }
+            }
+        });
+
+        registry.registerCommand(OutputCommands.CLEAR__QUICK_PICK, {
+            execute: async () => {
+                const channel = await this.pick({
+                    placeholder: 'Clear output channel.',
+                    channels: this.outputChannelManager.getChannels().slice()
+                });
+                if (channel) {
+                    channel.clear();
+                }
+            },
+            isEnabled: () => !!this.outputChannelManager.getChannels().length,
+            isVisible: () => !!this.outputChannelManager.getChannels().length
+        });
+        registry.registerCommand(OutputCommands.SHOW__QUICK_PICK, {
+            execute: async () => {
+                const channel = await this.pick({
+                    placeholder: 'Show output channel.',
+                    channels: this.outputChannelManager.getChannels().slice()
+                });
+                if (channel) {
+                    const { name } = channel;
+                    registry.executeCommand(OutputCommands.SHOW.id, { name, options: { preserveFocus: true } });
+                }
+            },
+            isEnabled: () => !!this.outputChannelManager.getChannels().length,
+            isVisible: () => !!this.outputChannelManager.getChannels().length
+        });
+        registry.registerCommand(OutputCommands.HIDE__QUICK_PICK, {
+            execute: async () => {
+                const channel = await this.pick({
+                    placeholder: 'Hide output channel.',
+                    channels: this.outputChannelManager.getVisibleChannels().slice()
+                });
+                if (channel) {
+                    const { name } = channel;
+                    registry.executeCommand(OutputCommands.HIDE.id, { name });
+                }
+            },
+            isEnabled: () => !!this.outputChannelManager.getVisibleChannels().length,
+            isVisible: () => !!this.outputChannelManager.getVisibleChannels().length
+        });
+        registry.registerCommand(OutputCommands.DISPOSE__QUICK_PICK, {
+            execute: async () => {
+                const channel = await this.pick({
+                    placeholder: 'Close output channel.',
+                    channels: this.outputChannelManager.getChannels().slice()
+                });
+                if (channel) {
+                    const { name } = channel;
+                    registry.executeCommand(OutputCommands.DISPOSE.id, { name });
+                }
+            },
+            isEnabled: () => !!this.outputChannelManager.getChannels().length,
+            isVisible: () => !!this.outputChannelManager.getChannels().length
+        });
     }
 
     registerMenus(registry: MenuModelRegistry): void {
@@ -194,6 +308,20 @@ export class OutputContribution extends AbstractViewContribution<OutputWidget> i
         predicate: (output: OutputWidget) => boolean = () => true
     ): boolean | false {
         return widget instanceof OutputWidget ? predicate(widget) : false;
+    }
+
+    protected async pick({ channels, placeholder }: { channels: OutputChannel[], placeholder: string }): Promise<OutputChannel | undefined> {
+        const items: QuickPickItem<OutputChannel>[] = [];
+        for (let i = 0; i < channels.length; i++) {
+            const channel = channels[i];
+            if (i === 0) {
+                items.push({ label: channel.isVisible ? 'Output Channels' : 'Hidden Channels', type: 'separator' });
+            } else if (!channel.isVisible && channels[i - 1].isVisible) {
+                items.push({ label: 'Hidden Channels', type: 'separator' });
+            }
+            items.push({ label: channel.name, value: channel });
+        }
+        return this.quickPickService.show(items, { placeholder });
     }
 
 }
