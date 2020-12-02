@@ -98,6 +98,7 @@ export interface PluginPackageView {
     id: string;
     name: string;
     when?: string;
+    type?: string;
 }
 
 export interface PluginPackageCommand {
@@ -610,6 +611,7 @@ export interface ViewContainer {
 export interface View {
     id: string;
     name: string;
+    type: 'tree' | 'webview';
     when?: string;
 }
 
