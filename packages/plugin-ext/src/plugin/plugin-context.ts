@@ -394,6 +394,13 @@ export function createAPIFactory(
             registerWebviewPanelSerializer(viewType: string, serializer: theia.WebviewPanelSerializer): theia.Disposable {
                 return webviewExt.registerWebviewPanelSerializer(viewType, serializer, plugin);
             },
+            registerWebviewViewProvider(viewId: string, provider: theia.WebviewViewProvider, options: {
+                webviewOptions?: {
+                    retainContextWhenHidden?: boolean;
+                };
+            }): theia.Disposable {
+                return webviewExt.registerWebviewViewProvider(plugin, viewId, provider, options);
+            },
             get state(): theia.WindowState {
                 return windowStateExt.getWindowState();
             },

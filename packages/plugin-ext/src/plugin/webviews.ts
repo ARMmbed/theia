@@ -135,6 +135,18 @@ export class WebviewsExtImpl implements WebviewsExt {
         });
     }
 
+    registerWebviewViewProvider(plugin: Plugin, viewId: string, provider: theia.WebviewViewProvider, options: {
+        webviewOptions?: {
+            retainContextWhenHidden?: boolean;
+        };
+    }): theia.Disposable {
+        console.log(`Registering webview view provider ${plugin.model.id} ${viewId} ${provider} ${options}`);
+
+        return new Disposable(() => {
+            console.log('Unregistering webview view provider');
+        });
+    }
+
     private getWebviewPanel(viewId: string): WebviewPanelImpl | undefined {
         if (this.webviewPanels.has(viewId)) {
             return this.webviewPanels.get(viewId);
