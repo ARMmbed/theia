@@ -68,6 +68,8 @@ export interface DebugConfiguration {
 
     /** Task to run after debug session ends */
     postDebugTask?: string | TaskIdentifier;
+
+    browser?: boolean;
 }
 export namespace DebugConfiguration {
     export function is(arg: DebugConfiguration | any): arg is DebugConfiguration {

@@ -5,7 +5,7 @@
 // - Mac: $HOME/Library/Application Support/Code/User/settings.json
 {
   "tslint.enable": true,
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "search.exclude": {
     "**/node_modules": true,
     "**/lib": true,

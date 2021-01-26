@@ -24,7 +24,9 @@
     "requestretry": "^3.1.0",
     "tar": "^4.0.0",
     "unzip-stream": "^0.3.0",
-    "vscode-debugprotocol": "^1.32.0"
+    "vscode-debugadapter": "^1.32.0",
+    "vscode-debugprotocol": "^1.32.0",
+    "vscode-ws-jsonrpc": "^0.2.0"
   },
   "publishConfig": {
     "access": "public"

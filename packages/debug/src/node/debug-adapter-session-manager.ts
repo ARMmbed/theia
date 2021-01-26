@@ -22,12 +22,13 @@ import { DebugAdapterPath } from '../common/debug-service';
 import { DebugConfiguration } from '../common/debug-configuration';
 import { DebugAdapterSession, DebugAdapterSessionFactory, DebugAdapterFactory } from '../common/debug-model';
 import { DebugAdapterContributionRegistry } from './debug-adapter-contribution-registry';
+import { BaseDebugAdapterSessionManager } from '../common/base-debug-adapter-session-manager';
 
 /**
  * Debug adapter session manager.
  */
 @injectable()
-export class DebugAdapterSessionManager implements MessagingService.Contribution {
+export class DebugAdapterSessionManager extends BaseDebugAdapterSessionManager<DebugAdapterSession> implements MessagingService.Contribution {
     protected readonly sessions = new Map<string, DebugAdapterSession>();
 
     @inject(DebugAdapterSessionFactory)
@@ -53,7 +54,7 @@ export class DebugAdapterSessionManager implements MessagingService.Contribution
      * @param config The [DebugConfiguration](#DebugConfiguration)
      * @returns The debug adapter session
      */
-    async create(config: DebugConfiguration, registry: DebugAdapterContributionRegistry): Promise<DebugAdapterSession> {
+    async create(config: DebugConfiguration, registry: DebugAdapterContributionRegistry): Promise<string> {
         const sessionId = UUID.uuid4();
 
         let communicationProvider;
@@ -67,33 +68,6 @@ export class DebugAdapterSessionManager implements MessagingService.Contribution
         const sessionFactory = registry.debugAdapterSessionFactory(config.type) || this.debugAdapterSessionFactory;
         const session = sessionFactory.get(sessionId, communicationProvider);
         this.sessions.set(sessionId, session);
-        return session;
-    }
-
-    /**
-     * Removes [debug adapter session](#DebugAdapterSession) from the list of the instantiated sessions.
-     * Is invoked when session is terminated and isn't needed anymore.
-     * @param sessionId The session identifier
-     */
-    remove(sessionId: string): void {
-        this.sessions.delete(sessionId);
-    }
-
-    /**
-     * Finds the debug adapter session by its id.
-     * Returning the value 'undefined' means the session isn't found.
-     * @param sessionId The session identifier
-     * @returns The debug adapter session
-     */
-    find(sessionId: string): DebugAdapterSession | undefined {
-        return this.sessions.get(sessionId);
-    }
-
-    /**
-     * Returns all instantiated debug adapter sessions.
-     * @returns An array of debug adapter sessions
-     */
-    getAll(): IterableIterator<DebugAdapterSession> {
-        return this.sessions.values();
+        return sessionId;
     }
 }

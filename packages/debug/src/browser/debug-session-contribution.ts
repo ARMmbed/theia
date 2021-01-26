@@ -30,6 +30,7 @@ import { IWebSocket } from 'vscode-ws-jsonrpc/lib/socket/socket';
 import { DebugAdapterPath } from '../common/debug-service';
 import { ContributionProvider } from '@theia/core/lib/common/contribution-provider';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
+import { DebugAdapterSessionManager } from './session/debug-adapter-session-manager';
 
 /**
  * DebugSessionContribution symbol for DI.
@@ -114,16 +115,36 @@ export class DefaultDebugSessionFactory implements DebugSessionFactory {
     protected readonly debugPreferences: DebugPreferences;
     @inject(FileService)
     protected readonly fileService: FileService;
+    @inject(DebugAdapterSessionManager)
+    protected readonly sessionManager!: DebugAdapterSessionManager;
 
     get(sessionId: string, options: DebugSessionOptions): DebugSession {
-        const connection = new DebugSessionConnection(
-            sessionId,
-            () => new Promise<IWebSocket>(resolve =>
-                this.connectionProvider.openChannel(`${DebugAdapterPath}/${sessionId}`, channel => {
-                    resolve(channel);
-                }, { reconnecting: false })
-            ),
-            this.getTraceOutputChannel());
+
+        let connection: DebugSessionConnection;
+
+        if (options.configuration.browser === true) {
+            const session = this.sessionManager.find(sessionId);
+
+            if (!session) {
+                throw new Error('Debug session not created');
+            }
+
+            connection = new DebugSessionConnection(
+                sessionId,
+                () => Promise.resolve(session),
+                this.getTraceOutputChannel()
+            );
+        } else {
+            connection = new DebugSessionConnection(
+                sessionId,
+                () => new Promise<IWebSocket>(resolve =>
+                    this.connectionProvider.openChannel(`${DebugAdapterPath}/${sessionId}`, channel => {
+                        resolve(channel);
+                    }, { reconnecting: false })
+                ),
+                this.getTraceOutputChannel());
+        }
+
         return new DebugSession(
             sessionId,
             options,

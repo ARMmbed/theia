@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2018 Red Hat, Inc. and others.
+ * Copyright (C) 2021 Arm and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,22 +14,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+// Modified from @theia/debug/lib/node/debug-service-impl.ts
+
 import { injectable, inject } from 'inversify';
-import { DebugConfiguration } from '../common/debug-configuration';
-import { BaseDebugAdapterSessionManager } from '../common/base-debug-adapter-session-manager';
-import { DebugAdapterSession } from '../common/debug-model';
-import { RegistryDebugService } from '../common/registry-debug-service';
+import { IWebSocket } from 'vscode-ws-jsonrpc';
+import { DebugConfiguration } from '../../common/debug-configuration';
+import { DebugAdapterSessionManager } from './debug-adapter-session-manager';
+import { RegistryDebugService } from '../../common/registry-debug-service';
+import { BaseDebugAdapterSessionManager } from '../../common/base-debug-adapter-session-manager';
 
-/**
- * DebugService implementation.
- */
 @injectable()
-export class DebugServiceImpl extends RegistryDebugService {
+export class FrontendDebugService extends RegistryDebugService {
 
-    @inject(BaseDebugAdapterSessionManager)
-    protected readonly sessionManager: BaseDebugAdapterSessionManager<DebugAdapterSession>;
+    @inject(DebugAdapterSessionManager) protected readonly sessionManager!: BaseDebugAdapterSessionManager<IWebSocket>;
 
-    async createDebugSession(config: DebugConfiguration): Promise<string> {
+    public async createDebugSession(config: DebugConfiguration): Promise<string> {
         const sessionId = await this.sessionManager.create(config, this.registry);
         this.sessions.add(sessionId);
         return sessionId;
@@ -40,7 +39,11 @@ export class DebugServiceImpl extends RegistryDebugService {
         if (debugSession) {
             this.sessionManager.remove(sessionId);
             this.sessions.delete(sessionId);
-            await debugSession.stop();
+            debugSession.dispose();
         }
+    }
+
+    public dispose(): void {
+        this.terminateDebugSession();
     }
 }
