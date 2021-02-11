@@ -17,8 +17,7 @@
 import * as fs from 'fs-extra';
 import * as Path from 'path';
 import { injectable, inject, postConstruct } from 'inversify';
-import { git } from 'dugite-extra/lib/core/git';
-import { push } from 'dugite-extra/lib/command/push';
+import { git, IGitResult } from 'dugite-extra/lib/core/git';
 import { pull } from 'dugite-extra/lib/command/pull';
 import { clone } from 'dugite-extra/lib/command/clone';
 import { fetch } from 'dugite-extra/lib/command/fetch';
@@ -40,7 +39,7 @@ import { Deferred } from '@theia/core/lib/common/promise-util';
 import * as strings from '@theia/core/lib/common/strings';
 import {
     Git, GitUtils, Repository, WorkingDirectoryStatus, GitFileChange, GitFileStatus, Branch, Commit,
-    CommitIdentity, GitResult, CommitWithChanges, GitFileBlame, CommitLine, GitError, Remote, StashEntry
+    CommitIdentity, CommitWithChanges, GitFileBlame, CommitLine, GitError, Remote, StashEntry
 } from '../common';
 import { GitRepositoryManager } from './git-repository-manager';
 import { GitLocator } from './git-locator/git-locator-protocol';
@@ -475,24 +474,24 @@ export class DugiteGit implements Git {
         }
         const branch = await this.getCurrentBranch(repositoryPath, localBranch);
         const branchName = typeof branch === 'string' ? branch : branch.name;
-        if (setUpstream || force) {
-            const args = ['push'];
-            if (force) {
-                args.push('--force');
-            }
-            if (setUpstream) {
-                args.push('--set-upstream');
-            }
-            if (currentRemote) {
-                args.push(currentRemote);
-            }
-            args.push(branchName + (remoteBranch ? `:${remoteBranch}` : ''));
+        const args = ['push'];
+        if (force) {
+            args.push('--force');
+        }
+        if (setUpstream) {
+            args.push('--set-upstream');
+        }
+        if (currentRemote) {
+            args.push(currentRemote);
+        }
+        args.push(branchName + (remoteBranch ? `:${remoteBranch}` : ''));
+
+        const result = await this.exec(repository, args, { expectedErrors: [ GitError.HTTPSAuthenticationFailed ] });
+        if (result.gitError) {
+            // gitError is only present when an expectedError was encountered; otherwise, `git` would reject
+
+            // Try a second time.  This sometimes works!
             await this.exec(repository, args);
-        } else {
-            const [exec, env] = await Promise.all([this.execProvider.exec(), this.gitEnv.promise]);
-            return this.manager.run(repository, () =>
-                push(repositoryPath, currentRemote!, branchName, remoteBranch, { exec, env })
-            );
         }
     }
 
@@ -604,7 +603,7 @@ export class DugiteGit implements Git {
         return (options && options.verbose === true) ? remotes : names;
     }
 
-    async exec(repository: Repository, args: string[], options?: Git.Options.Execution): Promise<GitResult> {
+    async exec(repository: Repository, args: string[], options?: Git.Options.Execution): Promise<IGitResult> {
         await this.ready.promise;
         const repositoryPath = this.getFsPath(repository);
         return this.manager.run(repository, async () => {
