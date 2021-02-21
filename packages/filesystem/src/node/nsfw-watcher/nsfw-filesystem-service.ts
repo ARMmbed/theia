@@ -26,7 +26,8 @@ import { FileChangeCollection } from '../file-change-collection';
 import { Deferred } from '@theia/core/lib/common/promise-util';
 
 export interface NsfwWatcherOptions {
-    ignored: IMinimatch[]
+    ignored: IMinimatch[];
+    resolveEventPath: (directory: string, file: string) => Promise<string>;
 }
 
 export interface NsfwFileSystemWatcherServerOptions {
@@ -251,13 +252,13 @@ export class NsfwWatcher {
                 await Promise.all(events.map(async event => {
                     if (event.action === nsfw.actions.RENAMED) {
                         const [oldPath, newPath] = await Promise.all([
-                            this.resolveEventPath(event.directory, event.oldFile!),
-                            this.resolveEventPath(event.newDirectory || event.directory, event.newFile!),
+                            this.watcherOptions.resolveEventPath(event.directory, event.oldFile!),
+                            this.watcherOptions.resolveEventPath(event.newDirectory || event.directory, event.newFile!),
                         ]);
                         this.pushFileChange(fileChangeCollection, FileChangeType.DELETED, oldPath);
                         this.pushFileChange(fileChangeCollection, FileChangeType.ADDED, newPath);
                     } else {
-                        const path = await this.resolveEventPath(event.directory, event.file!);
+                        const path = await this.watcherOptions.resolveEventPath(event.directory, event.file!);
                         if (event.action === nsfw.actions.CREATED) {
                             this.pushFileChange(fileChangeCollection, FileChangeType.ADDED, path);
                         } else if (event.action === nsfw.actions.DELETED) {
@@ -276,21 +277,6 @@ export class NsfwWatcher {
                     });
                 }
             }, console.error);
-        }
-    }
-
-    protected async resolveEventPath(directory: string, file: string): Promise<string> {
-        const path = join(directory, file);
-        try {
-            return await fsp.realpath(path);
-        } catch {
-            try {
-                // file does not exist try to resolve directory
-                return join(await fsp.realpath(directory), file);
-            } catch {
-                // directory does not exist fall back to symlink
-                return path;
-            }
         }
     }
 
@@ -425,6 +411,7 @@ export class NsfwFileSystemWatcherService implements FileSystemWatcherService {
             const watcherOptions: NsfwWatcherOptions = {
                 ignored: resolvedOptions.ignored
                     .map(pattern => new Minimatch(pattern, { dot: true })),
+                resolveEventPath: this.resolveEventPath
             };
             watcher = new NsfwWatcher(clientId, fsPath, watcherOptions, this.options, this.maybeClient);
             watcher.whenDisposed.then(() => this.watchers.delete(watcherKey));
@@ -466,6 +453,21 @@ export class NsfwFileSystemWatcherService implements FileSystemWatcherService {
             ignored: [],
             ...options,
         };
+    }
+
+    protected async resolveEventPath(directory: string, file: string): Promise<string> {
+        const path = join(directory, file);
+        try {
+            return await fsp.realpath(path);
+        } catch {
+            try {
+                // file does not exist try to resolve directory
+                return join(await fsp.realpath(directory), file);
+            } catch {
+                // directory does not exist fall back to symlink
+                return path;
+            }
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
