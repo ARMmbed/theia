@@ -107,6 +107,11 @@ export interface CommandHandler {
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     isToggled?(...args: any[]): boolean;
+    /**
+     * Test whether this handler is enabled (active).
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trackEnabled?(...args: any[]): { value: boolean, onChange: Event<boolean> };
 }
 
 export const CommandContribution = Symbol('CommandContribution');
@@ -266,6 +271,52 @@ export class CommandRegistry implements CommandService {
     }
 
     /**
+     * Ideally all handlers with dynamic enablement will implement `trackEnabled`.  However some implement
+     * only `isEnabled`.  This means we can't fire change events when the enablement changes.  So, if any handler
+     * implements`isEnabled` but not `trackEnabled`
+     * we return a value of true (even if isEnabled would return false) together with an event that never fires.
+     * This will result in menu items for such commands always being enabled in Electron.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trackEnabled(commandId: string, ...args: any[]): { value: boolean, onChange: Event<boolean> } {
+        const onChangeEmitter: Emitter<boolean> = new Emitter();
+
+        const handlers = this._handlers[commandId];
+        const handlerTrackers = handlers.map(handler => {
+            try {
+                if (handler.trackEnabled) {
+                    const { value: isHandlerEnabled, onChange } = handler.trackEnabled(...args);
+
+                    const tracker = { value: isHandlerEnabled, untrackable: false };
+                    onChange(isEnabled => {
+                        tracker.value = isEnabled;
+                        onChangeEmitter.fire(handlerTrackers.some(t => t.value));
+                    });
+                    return tracker;
+                } else if (handler.isEnabled) {
+                    return { value: true, untrackable: true };
+                } else {
+                    return { value: true, untrackable: false };
+                }
+            } catch (error) {
+                console.error(error);
+                return { value: false, untrackable: false };
+            }
+        });
+
+        if (handlerTrackers.some(t => t.untrackable)) {
+            return {
+                value: true,
+                onChange: Event.None
+            };
+        }
+        return {
+            value: handlerTrackers.some(t => t.value),
+            onChange: onChangeEmitter.event
+        };
+    }
+
+    /**
      * Test whether there is a visible handler for the given command.
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -334,8 +385,15 @@ export class CommandRegistry implements CommandService {
         if (handlers) {
             for (const handler of handlers) {
                 try {
-                    if (!handler.isEnabled || handler.isEnabled(...args)) {
-                        return handler;
+                    if (handler.trackEnabled) {
+                        const { value: isHandlerEnabled } = handler.trackEnabled(...args);
+                        if (isHandlerEnabled) {
+                            return handler;
+                        }
+                    } else if (handler.isEnabled) {
+                        if (handler.isEnabled(...args)) {
+                            return handler;
+                        }
                     }
                 } catch (error) {
                     console.error(error);

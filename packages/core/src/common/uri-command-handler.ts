@@ -18,6 +18,7 @@
 
 import { SelectionService } from '../common/selection-service';
 import { UriSelection } from '../common/selection';
+import { Event, Emitter } from '../common/event';
 import { CommandHandler } from './command';
 import { MaybeArray } from '.';
 import URI from './uri';
@@ -47,6 +48,9 @@ export interface MultiUriCommandHandler extends UriCommandHandler<URI[]> {
 }
 
 export class UriAwareCommandHandler<T extends MaybeArray<URI>> implements UriCommandHandler<T> {
+    protected onUriChangedEmitter: Emitter<T | undefined> = new Emitter();
+    public readonly onUriChanged = this.onUriChangedEmitter.event;
+
     /**
      * @deprecated since 1.6.0. Please use `UriAwareCommandHandler.MonoSelect` or `UriAwareCommandHandler.MultiSelect`.
      */
@@ -54,25 +58,29 @@ export class UriAwareCommandHandler<T extends MaybeArray<URI>> implements UriCom
         protected readonly selectionService: SelectionService,
         protected readonly handler: UriCommandHandler<T>,
         protected readonly options?: UriAwareCommandHandler.Options
-    ) { }
+    ) {
+        selectionService.onSelectionChanged(selection => this.selectionChanged(selection));
+     }
 
-    protected getUri(...args: any[]): T | undefined {
+    protected getUriFromArgs(...args: any[]): T | undefined {
         const [maybeUriArray] = args;
         const firstArgIsOK = this.isMulti()
             ? Array.isArray(maybeUriArray) && maybeUriArray.every(uri => uri instanceof URI)
             : maybeUriArray instanceof URI;
 
-        if (firstArgIsOK) {
-            return maybeUriArray;
-        }
+        return firstArgIsOK ? maybeUriArray : undefined;
+    }
 
-        const { selection } = this.selectionService;
-
+    protected getUriFromSelection(selection: Object | undefined): T | undefined {
         const uriOrUris = this.isMulti()
             ? UriSelection.getUris(selection)
             : UriSelection.getUri(selection);
 
         return uriOrUris as T;
+    }
+
+    protected getUri(...args: any[]): T | undefined {
+        return this.getUriFromArgs(args) || this.getUriFromSelection(this.selectionService.selection);
     }
 
     protected getArgsWithUri(...args: any[]): [T | undefined, ...any[]] {
@@ -89,15 +97,32 @@ export class UriAwareCommandHandler<T extends MaybeArray<URI>> implements UriCom
         return uri ? this.handler.execute(uri, ...others) : undefined;
     }
 
+    /**
+     * The general approach here is that we make the item visible if a selection
+     * change would enable the handler.  Only if a selection change can never enable
+     * the handler do we mark the item invisible.
+     *
+     * That means the item is invisible only if the uri (or array of uris) is passed as
+     * the first parameter of the args and all of the handlers say they cannot handle
+     * that uri (or array of uris).
+     *
+     * It is really only in a context menu where the uri is passed in the args.  In the
+     * context menu disabled items are not visible anyway, even if indicated here as being
+     * visible.  So perhaps just returning true is ok.
+     *
+     * @param args passed on as-is to the handler if the first arg is a URI or URI[], otherwise
+     *          the URI or URI[] is obtained from the current selection and prepended to args.
+     */
     isVisible(...args: any[]): boolean {
-        const [uri, ...others] = this.getArgsWithUri(...args);
-        if (uri) {
-            if (this.handler.isVisible) {
-                return this.handler.isVisible(uri, ...others);
-            }
-            return true;
-        }
-        return false;
+        return true;
+        // const [uri, ...others] = this.getArgsWithUri(...args);
+        // if (uri) {
+        //     if (this.handler.isVisible) {
+        //         return this.handler.isVisible(uri, ...others);
+        //     }
+        //     return true;
+        // }
+        // return false;
     }
 
     isEnabled(...args: any[]): boolean {
@@ -111,8 +136,44 @@ export class UriAwareCommandHandler<T extends MaybeArray<URI>> implements UriCom
         return false;
     }
 
+    trackEnabled(...args: any[]): { value: boolean, onChange: Event<boolean> } {
+        const value = this.isEnabled(args);
+        const onChangeEmitter: Emitter<boolean> = new Emitter();
+
+        if (this.options?.stop) {
+            onChangeEmitter.fire(false);
+        }
+
+        const isEnabled = this.handler.isEnabled;
+        if (isEnabled) {
+            const uri = this.getUriFromArgs(...args);
+            if (!uri) {
+                // uri not specified in args, so it is coming from selection, so it may change
+                this.onUriChanged(uriOrUris => {
+                    if (uriOrUris) {
+                        const newValue = isEnabled(uriOrUris, ...args);
+                        onChangeEmitter.fire(newValue);
+                    } else {
+                        onChangeEmitter.fire(false);
+                    }
+                });
+            }
+        }
+
+        return { value, onChange: onChangeEmitter.event };
+    }
+
     protected isMulti(): boolean | undefined {
         return this.options && !!this.options.multi;
+    }
+
+    protected selectionChanged(selection: any): void {
+        const uriOrUris = this.getUriFromSelection(selection);
+
+        if (this.options?.stop) {
+            this.onUriChangedEmitter.fire(uriOrUris);
+        }
+        this.onUriChangedEmitter.fire(uriOrUris);
     }
 }
 
@@ -127,6 +188,7 @@ export namespace UriAwareCommandHandler {
          */
         readonly multi?: boolean,
 
+        readonly stop?: boolean,
     }
 
     /**
@@ -144,5 +206,6 @@ export namespace UriAwareCommandHandler {
         /* eslint-disable-next-line deprecation/deprecation*/ // Safe to use when the generic and the options agree.
         return new UriAwareCommandHandler<URI[]>(selectionService, handler, { multi: true });
     }
+
 }
 

@@ -144,6 +144,8 @@ export class ElectronMainMenuFactory {
                     throw new Error(`Unknown command with ID: ${commandId}.`);
                 }
 
+                const { value: enabled, onChange: onEnabledChanged } = this.commandRegistry.trackEnabled(commandId, ...args);
+
                 if (!this.commandRegistry.isVisible(commandId, ...args)
                     || (!!node.action.when && !this.contextKeyService.match(node.action.when))) {
                     continue;
@@ -164,16 +166,20 @@ export class ElectronMainMenuFactory {
                     accelerator = this.acceleratorFor(binding);
                 }
 
-                items.push({
+                const item = {
                     id: node.id,
                     label: node.label,
                     type: this.commandRegistry.getToggledHandler(commandId, ...args) ? 'checkbox' : 'normal',
                     checked: this.commandRegistry.isToggled(commandId, ...args),
-                    enabled: true, // https://github.com/eclipse-theia/theia/issues/446
+                    enabled,
                     visible: true,
                     click: () => this.execute(commandId, args),
                     accelerator
-                });
+                } as Electron.MenuItemConstructorOptions;
+
+                onEnabledChanged(e => this.updateEnabledState(item, e));
+                items.push(item);
+
                 if (this.commandRegistry.getToggledHandler(commandId, ...args)) {
                     this._toggledCommands.add(commandId);
                 }
@@ -182,6 +188,19 @@ export class ElectronMainMenuFactory {
             }
         }
         return items;
+    }
+
+    protected updateEnabledState(item: Electron.MenuItemConstructorOptions, enabled: boolean): void {
+        // The menu will most likely have been built by the time the first change comes in, but just
+        // in case not, update the menu item options before checking the menu itself.
+        if (item.enabled !== enabled) {
+            item.enabled = enabled;
+            if (this._menu && item.id) {
+                const menuItem = this._menu.getMenuItemById(item.id);
+                menuItem.enabled = enabled;
+                electron.remote.getCurrentWindow().setMenu(this._menu);
+            }
+        }
     }
 
     protected handleDefault(menuNode: MenuNode, args: any[] = [], options?: ElectronMenuOptions): Electron.MenuItemConstructorOptions[] {
