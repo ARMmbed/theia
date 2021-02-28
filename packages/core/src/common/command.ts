@@ -107,6 +107,16 @@ export interface CommandHandler {
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     isToggled?(...args: any[]): boolean;
+    /**
+     * Track whether this handler is enabled (active).
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trackVisible?(...args: any[]): { value: boolean, onChange: Event<boolean>, dispose: () => void };
+    /**
+     * Track whether this handler is enabled (active).
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trackEnabled?(...args: any[]): { value: boolean, onChange: Event<boolean>, dispose: () => void };
 }
 
 export const CommandContribution = Symbol('CommandContribution');
@@ -152,6 +162,11 @@ export interface CommandService {
      * An event is emitted when a command was executed.
      */
     readonly onDidExecuteCommand: Event<CommandEvent>;
+}
+
+export interface HandlerPropertyTracker extends Disposable {
+    value: boolean;
+    onChange: Event<boolean>;
 }
 
 /**
@@ -210,6 +225,9 @@ export class CommandRegistry implements CommandService {
         return {
             dispose: () => {
                 delete this._commands[command.id];
+                // if (Disposable.is(command)) {
+                //     command.dispose();
+                // }
             }
         };
     }
@@ -266,11 +284,108 @@ export class CommandRegistry implements CommandService {
     }
 
     /**
+     * Ideally all handlers with dynamic enablement will implement `trackEnabled`. ('Dynamic enablement' meaning handlers where isEnabled can return different values
+     * for the identical args) However some implement
+     * only `isEnabled`.  This means we can't fire change events when the enablement changes.  So, if any handler
+     * implements`isEnabled` but not `trackEnabled`
+     * we return a value of true (even if isEnabled would return false) together with an event that never fires.
+     * This will result in menu items for such commands always being enabled in Electron.
+     *
+     * Note: This method assumes that if a handler is not visible then it will also indicate that it is not enabled.
+     * This assumption saves us from having to track visibility here too.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trackEnabled(commandId: string, ...args: any[]): HandlerPropertyTracker {
+        const onChangeEmitter: Emitter<boolean> = new Emitter();
+        const toDispose = new DisposableCollection(onChangeEmitter);
+
+        const handlers = this._handlers[commandId];
+        const handlerTrackers = handlers.map(handler => {
+            try {
+                if (handler.trackEnabled) {
+                    const handlerTracker = handler.trackEnabled(...args);
+                    toDispose.push(handlerTracker);
+                    const tracker = { value: handlerTracker.value, untrackable: false };
+                    handlerTracker.onChange(isEnabled => {
+                        tracker.value = isEnabled;
+                        onChangeEmitter.fire(handlerTrackers.some(t => t.value));
+                    });
+                    return tracker;
+                } else if (handler.isEnabled) {
+                    return { value: true, untrackable: true };
+                } else {
+                    return { value: true, untrackable: false };
+                }
+            } catch (error) {
+                console.error(error);
+                return { value: false, untrackable: false };
+            }
+        });
+
+        if (handlerTrackers.some(t => t.untrackable)) {
+            toDispose.dispose();
+            return {
+                value: true,
+                onChange: Event.None,
+                dispose: () => {},
+            };
+        }
+        return {
+            value: handlerTrackers.some(t => t.value),
+            onChange: onChangeEmitter.event,
+            dispose: () => toDispose.dispose()
+        };
+    }
+
+    /**
      * Test whether there is a visible handler for the given command.
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     isVisible(command: string, ...args: any[]): boolean {
         return typeof this.getVisibleHandler(command, ...args) !== 'undefined';
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    trackVisible(commandId: string, ...args: any[]): HandlerPropertyTracker {
+        const onChangeEmitter: Emitter<boolean> = new Emitter();
+        const toDispose = new DisposableCollection(onChangeEmitter);
+
+        const handlers = this._handlers[commandId];
+        const handlerTrackers = handlers.map(handler => {
+            try {
+                if (handler.trackVisible) {
+                    const handlerTracker = handler.trackVisible(...args);
+                    toDispose.push(handlerTracker);
+                    const tracker = { value: handlerTracker.value, untrackable: false };
+                    handlerTracker.onChange(isVisible => {
+                        tracker.value = isVisible;
+                        onChangeEmitter.fire(handlerTrackers.some(t => t.value));
+                    });
+                    return tracker;
+                } else if (handler.isVisible) {
+                    return { value: true, untrackable: true };
+                } else {
+                    return { value: true, untrackable: false };
+                }
+            } catch (error) {
+                console.error(error);
+                return { value: false, untrackable: false };
+            }
+        });
+
+        if (handlerTrackers.some(t => t.untrackable)) {
+            toDispose.dispose();
+            return {
+                value: true,
+                onChange: Event.None,
+                dispose: () => {},
+            };
+        }
+        return {
+            value: handlerTrackers.some(t => t.value),
+            onChange: onChangeEmitter.event,
+            dispose: () => toDispose.dispose()
+        };
     }
 
     /**
@@ -334,7 +449,15 @@ export class CommandRegistry implements CommandService {
         if (handlers) {
             for (const handler of handlers) {
                 try {
-                    if (!handler.isEnabled || handler.isEnabled(...args)) {
+                    if (handler.trackEnabled) {
+                        if (handler.trackEnabled(...args).value) {
+                            return handler;
+                        }
+                    } else if (handler.isEnabled) {
+                        if (handler.isEnabled(...args)) {
+                            return handler;
+                        }
+                    } else {
                         return handler;
                     }
                 } catch (error) {
