@@ -44,6 +44,7 @@ const debounce = require('lodash.debounce');
 export const TREE_CLASS = 'theia-Tree';
 export const TREE_CONTAINER_CLASS = 'theia-TreeContainer';
 export const TREE_NODE_CLASS = 'theia-TreeNode';
+export const TREE_NODE_INDICATOR_CLASS = 'theia-TreeNodeIndicator';
 export const TREE_NODE_CONTENT_CLASS = 'theia-TreeNodeContent';
 export const TREE_NODE_TAIL_CLASS = 'theia-TreeNodeTail';
 export const TREE_NODE_SEGMENT_CLASS = 'theia-TreeNodeSegment';
@@ -482,6 +483,25 @@ export class TreeWidget extends ReactWidget implements StatefulWidget {
     }
 
     /**
+     * Render the tree node indicator given the node properties.
+     * @param node the tree node.
+     * @param props the node properties.
+     */
+    protected renderIndicator(node: TreeNode, props: NodeProps): React.ReactNode {
+        let style: React.CSSProperties = {
+        };
+        const indicatorColor = this.getDecorationData(node, 'indicatorColor').filter(notEmpty).shift();
+        if (indicatorColor) {
+            style = {
+                ...style,
+                backgroundColor: indicatorColor
+            };
+        }
+        return <div className={TREE_NODE_INDICATOR_CLASS} style={style}>
+        </div>;
+    }
+
+    /**
      * Render the tree node given the node properties.
      * @param node the tree node.
      * @param props the node properties.
@@ -786,6 +806,7 @@ export class TreeWidget extends ReactWidget implements StatefulWidget {
             return undefined;
         }
         const attributes = this.createNodeAttributes(node, props);
+        const indicator = this.renderIndicator(node, props);
         const content = <div className={TREE_NODE_CONTENT_CLASS}>
             {this.renderExpansionToggle(node, props)}
             {this.decorateIcon(node, this.renderIcon(node, props))}
@@ -794,7 +815,7 @@ export class TreeWidget extends ReactWidget implements StatefulWidget {
             {this.renderCaptionAffixes(node, props, 'captionSuffixes')}
             {this.renderTailDecorations(node, props)}
         </div>;
-        return React.createElement('div', attributes, content);
+        return React.createElement('div', attributes, indicator, content);
     }
 
     /**

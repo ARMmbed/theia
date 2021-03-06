@@ -303,6 +303,10 @@ export namespace WidgetDecoration {
          */
         readonly backgroundColor?: Color;
         /**
+         * The background color of the indicator.
+         */
+        readonly indicatorColor?: Color;
+        /**
          * Optional, leading prefixes right before the caption.
          */
         readonly captionPrefixes?: CaptionAffix[];
