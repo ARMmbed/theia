@@ -108,15 +108,15 @@ export interface CommandHandler {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     isToggled?(...args: any[]): boolean;
     /**
-     * Track whether this handler is enabled (active).
+     * Track whether this handler is visible (active).
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    trackVisible?(...args: any[]): { value: boolean, onChange: Event<boolean>, dispose: () => void };
+    trackVisible?(...args: any[]): HandlerPropertyTracker;
     /**
      * Track whether this handler is enabled (active).
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    trackEnabled?(...args: any[]): { value: boolean, onChange: Event<boolean>, dispose: () => void };
+    trackEnabled?(...args: any[]): HandlerPropertyTracker;
 }
 
 export const CommandContribution = Symbol('CommandContribution');
@@ -165,8 +165,9 @@ export interface CommandService {
 }
 
 export interface HandlerPropertyTracker extends Disposable {
-    value: boolean;
-    onChange: Event<boolean>;
+    readonly value: boolean;
+    readonly untrackable: boolean;
+    readonly onChange: Event<boolean>;
 }
 
 /**
@@ -312,7 +313,7 @@ export class CommandRegistry implements CommandService {
                     });
                     return tracker;
                 } else if (handler.isEnabled) {
-                    return { value: true, untrackable: true };
+                    return { value: handler.isEnabled(...args), untrackable: true };
                 } else {
                     return { value: true, untrackable: false };
                 }
@@ -322,16 +323,9 @@ export class CommandRegistry implements CommandService {
             }
         });
 
-        if (handlerTrackers.some(t => t.untrackable)) {
-            toDispose.dispose();
-            return {
-                value: true,
-                onChange: Event.None,
-                dispose: () => {},
-            };
-        }
         return {
             value: handlerTrackers.some(t => t.value),
+            untrackable: handlerTrackers.some(t => t.untrackable),
             onChange: onChangeEmitter.event,
             dispose: () => toDispose.dispose()
         };
@@ -363,7 +357,7 @@ export class CommandRegistry implements CommandService {
                     });
                     return tracker;
                 } else if (handler.isVisible) {
-                    return { value: true, untrackable: true };
+                    return { value: handler.isVisible(...args), untrackable: true };
                 } else {
                     return { value: true, untrackable: false };
                 }
@@ -373,16 +367,9 @@ export class CommandRegistry implements CommandService {
             }
         });
 
-        if (handlerTrackers.some(t => t.untrackable)) {
-            toDispose.dispose();
-            return {
-                value: true,
-                onChange: Event.None,
-                dispose: () => {},
-            };
-        }
         return {
             value: handlerTrackers.some(t => t.value),
+            untrackable: handlerTrackers.some(t => t.untrackable),
             onChange: onChangeEmitter.event,
             dispose: () => toDispose.dispose()
         };

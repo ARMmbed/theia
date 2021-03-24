@@ -141,7 +141,11 @@ export class UriAwareCommandHandler<T extends MaybeArray<URI>> implements UriCom
             }));
         }
 
-        return { value: this.isVisible(args), onChange: onChangeEmitter.event, dispose: () => toDispose.dispose() };
+        return {
+            value: this.isVisible(args),
+            untrackable: false,
+            onChange: onChangeEmitter.event, dispose: () => toDispose.dispose()
+        };
     }
 
     /**
@@ -169,7 +173,11 @@ export class UriAwareCommandHandler<T extends MaybeArray<URI>> implements UriCom
             }));
         }
 
-        return { value: this.isEnabled(args), onChange: onChangeEmitter.event, dispose: () => toDispose.dispose() };
+        return {
+            value: this.isEnabled(args),
+            untrackable: false,
+            onChange: onChangeEmitter.event, dispose: () => toDispose.dispose()
+        };
     }
 
     protected isMulti(): boolean | undefined {

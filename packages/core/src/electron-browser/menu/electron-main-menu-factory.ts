@@ -38,9 +38,18 @@ export interface ElectronMenuOptions {
      * Defaults to `true`.
      */
     readonly showDisabled?: boolean;
+
+    /**
+     * Legacy menu contributions may be untrackable, meaning the isVisible and isEnabled
+     * state may change and we won't be notified.  In some cases this is ok, for example
+     * in a context menu this is ok because the menu is rebuilt each time it is shown.
+     * However for items in the main menu this means we cannot update the menu and we must
+     * therefore always show the menu item as visible and enabled.
+     */
+    untrackableAlwaysActive?: boolean;
 }
 
-interface MenuItemTracker {
+export interface MenuItemTracker {
     node: ActionMenuNode;
     visible: boolean;
     enabled: boolean;
@@ -83,7 +92,7 @@ export class ElectronMainMenuFactory {
     createMenuBar(): Electron.Menu {
         this.toDisposeOnMenuRecreation.dispose();
         const menuModel = this.menuProvider.getMenu(MAIN_MENU_BAR);
-        const template = this.fillMenuTemplate([], menuModel);
+        const template = this.fillMenuTemplate([], menuModel, [], { untrackableAlwaysActive: true });
         if (isOSX) {
             template.unshift(this.createOSXMenu());
         }
@@ -94,7 +103,7 @@ export class ElectronMainMenuFactory {
 
     createContextMenu(menuPath: MenuPath, args?: any[]): Electron.Menu {
         const menuModel = this.menuProvider.getMenu(menuPath);
-        const template = this.fillMenuTemplate([], menuModel, args, { showDisabled: false });
+        const template = this.fillMenuTemplate([], menuModel, args, { showDisabled: false, untrackableAlwaysActive: false });
         return electron.remote.Menu.buildFromTemplate(template);
     }
 
@@ -111,6 +120,8 @@ export class ElectronMainMenuFactory {
         args: any[] = [],
         options?: ElectronMenuOptions
     ): Electron.MenuItemConstructorOptions[] {
+        const untrackableAlwaysActive = options ? !!options.untrackableAlwaysActive : false;
+
         for (const menu of menuModel.children) {
             if (menu instanceof CompositeMenuNode) {
                 if (menu.children.length > 0) {
@@ -192,8 +203,8 @@ export class ElectronMainMenuFactory {
                     label: node.label,
                     type: this.commandRegistry.getToggledHandler(commandId, ...args) ? 'checkbox' : 'normal',
                     checked: this.commandRegistry.isToggled(commandId, ...args),
-                    enabled: itemTracker.enabled,
-                    visible: this.reallyVisible(itemTracker, options),
+                    enabled: (untrackableAlwaysActive && enablementTracker.untrackable) || itemTracker.enabled,
+                    visible: (untrackableAlwaysActive && visibilityTracker.untrackable) || this.reallyVisible(itemTracker, options),
                     click: () => this.execute(commandId, args),
                     accelerator
                 } as Electron.MenuItemConstructorOptions;
