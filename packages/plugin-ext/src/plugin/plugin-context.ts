@@ -789,7 +789,7 @@ export function createAPIFactory(
         };
 
         return <typeof theia>{
-            version: require('../../package.json').version,
+            version: process.env['VSCODE_API_VERSION'] || require('../../package.json').version,
             commands,
             comment,
             window,
