@@ -120,7 +120,7 @@ export class NsfwWatcher {
         protected readonly nsfwFileSystemWatchServerOptions: NsfwFileSystemWatcherServerOptions,
         /** The client to forward events to. */
         protected readonly fileSystemWatcherClient: FileSystemWatcherServiceClient,
-        /** Amount of time in ms to wait once this handle is not referenced anymore. */
+        /** Amount of time in ms to wait once this handle ins't referenced anymore. */
         protected readonly deferredDisposalTimeout = 10_000,
     ) {
         this.refsPerClient.set(initialClientId, { value: 1 });
@@ -206,7 +206,7 @@ export class NsfwWatcher {
         }
         const watcher = await this.orCancel(this.createNsfw());
         await this.orCancel(watcher.start().then(() => {
-            this.debug('STARTED', `disposed=${this.disposed}`);
+            this.debug('STARTED', `diposed=${this.disposed}`);
             // The watcher could be disposed while it was starting, make sure to check for this:
             if (this.disposed) {
                 this.stopNsfw(watcher);

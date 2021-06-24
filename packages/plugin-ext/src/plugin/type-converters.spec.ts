@@ -157,7 +157,7 @@ describe('Type converters:', () => {
 
                 // when
                 const result: model.MarkdownString[] = Converter.fromManyMarkdown(markups)
-                    // convert to vanilla JS Object for deepStrictEqual comparison:
+                    // convert to vanilla JS Object for deepStrictEqual comparaison:
                     .map(md => ({ ...md }));
 
                 // then
