@@ -103,11 +103,6 @@ export class RemoteFileSystemProxyFactory<T extends object> extends JsonRpcProxy
     }
 }
 
-/**
- * Frontend component.
- *
- * Wraps the remote filesystem provider living on the backend.
- */
 @injectable()
 export class RemoteFileSystemProvider implements Required<FileSystemProvider>, Disposable {
 
@@ -134,10 +129,6 @@ export class RemoteFileSystemProvider implements Required<FileSystemProvider>, D
     );
 
     protected watcherSequence = 0;
-    /**
-     * We'll track the currently allocated watchers, in order to re-allocate them
-     * with the same options once we reconnect to the backend after a disconnection.
-     */
     protected readonly watchOptions = new Map<number, {
         uri: string;
         options: WatchOptions
@@ -146,12 +137,11 @@ export class RemoteFileSystemProvider implements Required<FileSystemProvider>, D
     private _capabilities: FileSystemProviderCapabilities = 0;
     get capabilities(): FileSystemProviderCapabilities { return this._capabilities; }
 
-    protected readonly readyDeferred = new Deferred<void>();
-    readonly ready = this.readyDeferred.promise;
+    protected readonly deferredReady = new Deferred<void>();
+    get ready(): Promise<void> {
+        return this.deferredReady.promise;
+    }
 
-    /**
-     * Wrapped remote filesystem.
-     */
     @inject(RemoteFileSystemServer)
     protected readonly server: JsonRpcProxy<RemoteFileSystemServer>;
 
@@ -159,8 +149,8 @@ export class RemoteFileSystemProvider implements Required<FileSystemProvider>, D
     protected init(): void {
         this.server.getCapabilities().then(capabilities => {
             this._capabilities = capabilities;
-            this.readyDeferred.resolve();
-        }, this.readyDeferred.reject);
+            this.deferredReady.resolve(undefined);
+        }, this.deferredReady.reject);
         this.server.setClient({
             notifyDidChangeFile: ({ changes }) => {
                 this.onDidChangeFileEmitter.fire(changes.map(event => ({ resource: new URI(event.resource), type: event.type })));
@@ -296,23 +286,19 @@ export class RemoteFileSystemProvider implements Required<FileSystemProvider>, D
     }
 
     watch(resource: URI, options: WatchOptions): Disposable {
-        const watcherId = this.watcherSequence++;
+        const watcher = this.watcherSequence++;
         const uri = resource.toString();
-        this.watchOptions.set(watcherId, { uri, options });
-        this.server.watch(watcherId, uri, options);
+        this.watchOptions.set(watcher, { uri, options });
+        this.server.watch(watcher, uri, options);
+
         const toUnwatch = Disposable.create(() => {
-            this.watchOptions.delete(watcherId);
-            this.server.unwatch(watcherId);
+            this.watchOptions.delete(watcher);
+            this.server.unwatch(watcher);
         });
         this.toDispose.push(toUnwatch);
         return toUnwatch;
     }
 
-    /**
-     * When a frontend disconnects (e.g. bad connection) the backend resources will be cleared.
-     *
-     * This means that we need to re-allocate the watchers when a frontend reconnects.
-     */
     protected reconnect(): void {
         for (const [watcher, { uri, options }] of this.watchOptions.entries()) {
             this.server.watch(watcher, uri, options);
@@ -322,19 +308,12 @@ export class RemoteFileSystemProvider implements Required<FileSystemProvider>, D
 }
 
 /**
- * Backend component.
- *
  * JSON-RPC server exposing a wrapped file system provider remotely.
  */
 @injectable()
 export class FileSystemProviderServer implements RemoteFileSystemServer {
 
     private readonly BUFFER_SIZE = 64 * 1024;
-
-    /**
-     * Mapping of `watcherId` to a disposable watcher handle.
-     */
-    protected watchers = new Map<number, Disposable>();
 
     protected readonly toDispose = new DisposableCollection();
     dispose(): void {
@@ -346,9 +325,6 @@ export class FileSystemProviderServer implements RemoteFileSystemServer {
         this.client = client;
     }
 
-    /**
-     * Wrapped file system provider.
-     */
     @inject(FileSystemProvider)
     protected readonly provider: FileSystemProvider & Partial<Disposable>;
 
@@ -474,19 +450,18 @@ export class FileSystemProviderServer implements RemoteFileSystemServer {
         throw new Error('not supported');
     }
 
-    async watch(requestedWatcherId: number, resource: string, opts: WatchOptions): Promise<void> {
-        if (this.watchers.has(requestedWatcherId)) {
-            throw new Error('watcher id is already allocated!');
-        }
+    protected watchers = new Map<number, Disposable>();
+
+    async watch(req: number, resource: string, opts: WatchOptions): Promise<void> {
         const watcher = this.provider.watch(new URI(resource), opts);
-        this.watchers.set(requestedWatcherId, watcher);
-        this.toDispose.push(Disposable.create(() => this.unwatch(requestedWatcherId)));
+        this.watchers.set(req, watcher);
+        this.toDispose.push(Disposable.create(() => this.unwatch(req)));
     }
 
-    async unwatch(watcherId: number): Promise<void> {
-        const watcher = this.watchers.get(watcherId);
+    async unwatch(req: number): Promise<void> {
+        const watcher = this.watchers.get(req);
         if (watcher) {
-            this.watchers.delete(watcherId);
+            this.watchers.delete(req);
             watcher.dispose();
         }
     }

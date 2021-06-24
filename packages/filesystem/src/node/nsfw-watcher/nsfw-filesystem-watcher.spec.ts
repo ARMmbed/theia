@@ -20,7 +20,7 @@ import * as fs from 'fs-extra';
 import * as assert from 'assert';
 import URI from '@theia/core/lib/common/uri';
 import { FileUri } from '@theia/core/lib/node';
-import { NsfwFileSystemWatcherService } from './nsfw-filesystem-service';
+import { NsfwFileSystemWatcherServer } from './nsfw-filesystem-watcher';
 import { DidFilesChangedParams } from '../../common/filesystem-watcher-protocol';
 /* eslint-disable no-unused-expressions */
 
@@ -30,26 +30,27 @@ const track = temp.track();
 describe('nsfw-filesystem-watcher', function (): void {
 
     let root: URI;
-    let watcherService: NsfwFileSystemWatcherService;
+    let watcherServer: NsfwFileSystemWatcherServer;
     let watcherId: number;
 
     this.timeout(10000);
 
     beforeEach(async () => {
         root = FileUri.create(fs.realpathSync(temp.mkdirSync('node-fs-root')));
-        watcherService = createNsfwFileSystemWatcherService();
-        watcherId = await watcherService.watchFileChanges(0, root.toString());
+        watcherServer = createNsfwFileSystemWatcherServer();
+        watcherId = await watcherServer.watchFileChanges(root.toString());
         await sleep(2000);
     });
 
     afterEach(async () => {
         track.cleanupSync();
-        watcherService.dispose();
+        watcherServer.dispose();
     });
 
     it('Should receive file changes events from in the workspace by default.', async function (): Promise<void> {
         if (process.platform === 'win32') {
             this.skip();
+            return;
         }
         const actualUris = new Set<string>();
 
@@ -60,7 +61,7 @@ describe('nsfw-filesystem-watcher', function (): void {
             onError(): void {
             }
         };
-        watcherService.setClient(watcherClient);
+        watcherServer.setClient(watcherClient);
 
         const expectedUris = [
             root.resolve('foo').toString(),
@@ -86,6 +87,7 @@ describe('nsfw-filesystem-watcher', function (): void {
     it('Should not receive file changes events from in the workspace by default if unwatched', async function (): Promise<void> {
         if (process.platform === 'win32') {
             this.skip();
+            return;
         }
         const actualUris = new Set<string>();
 
@@ -96,10 +98,10 @@ describe('nsfw-filesystem-watcher', function (): void {
             onError(): void {
             }
         };
-        watcherService.setClient(watcherClient);
+        watcherServer.setClient(watcherClient);
 
         /* Unwatch root */
-        watcherService.unwatchFileChanges(watcherId);
+        watcherServer.unwatchFileChanges(watcherId);
 
         fs.mkdirSync(FileUri.fsPath(root.resolve('foo')));
         expect(fs.statSync(FileUri.fsPath(root.resolve('foo'))).isDirectory()).to.be.true;
@@ -116,8 +118,8 @@ describe('nsfw-filesystem-watcher', function (): void {
         assert.deepStrictEqual(0, actualUris.size);
     });
 
-    function createNsfwFileSystemWatcherService(): NsfwFileSystemWatcherService {
-        return new NsfwFileSystemWatcherService({
+    function createNsfwFileSystemWatcherServer(): NsfwFileSystemWatcherServer {
+        return new NsfwFileSystemWatcherServer({
             verbose: true
         });
     }

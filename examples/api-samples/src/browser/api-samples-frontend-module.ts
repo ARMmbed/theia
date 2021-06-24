@@ -19,7 +19,6 @@ import { bindDynamicLabelProvider } from './label/sample-dynamic-label-provider-
 import { bindSampleUnclosableView } from './view/sample-unclosable-view-contribution';
 import { bindSampleOutputChannelWithSeverity } from './output/sample-output-channel-with-severity';
 import { bindSampleMenu } from './menu/sample-menu-contribution';
-import { bindSampleFileWatching } from './file-watching/sample-file-watching-contribution';
 
 import '../../src/browser/style/branding.css';
 
@@ -28,5 +27,4 @@ export default new ContainerModule(bind => {
     bindSampleUnclosableView(bind);
     bindSampleOutputChannelWithSeverity(bind);
     bindSampleMenu(bind);
-    bindSampleFileWatching(bind);
 });

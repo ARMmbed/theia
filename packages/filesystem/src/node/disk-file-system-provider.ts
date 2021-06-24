@@ -804,35 +804,18 @@ export class DiskFileSystemProvider implements Disposable,
     // #region File Watching
 
     watch(resource: URI, opts: WatchOptions): Disposable {
-        const watcherService = this.watcher;
-        /**
-         * Disposable handle. Can be disposed early (before the watcher is allocated.)
-         */
-        const handle = {
-            disposed: false,
-            watcherId: undefined as number | undefined,
-            dispose(): void {
-                if (this.disposed) {
-                    return;
-                }
-                if (this.watcherId !== undefined) {
-                    watcherService.unwatchFileChanges(this.watcherId);
-                }
-                this.disposed = true;
-            },
-        };
-        watcherService.watchFileChanges(resource.toString(), {
-            // Convert from `files.WatchOptions` to internal `watcher-protocol.WatchOptions`:
+        const toUnwatch = new DisposableCollection(Disposable.create(() => { /* mark as not disposed */ }));
+        this.watcher.watchFileChanges(resource.toString(), {
             ignored: opts.excludes
-        }).then(watcherId => {
-            if (handle.disposed) {
-                watcherService.unwatchFileChanges(watcherId);
+        }).then(watcher => {
+            if (toUnwatch.disposed) {
+                this.watcher.unwatchFileChanges(watcher);
             } else {
-                handle.watcherId = watcherId;
+                toUnwatch.push(Disposable.create(() => this.watcher.unwatchFileChanges(watcher)));
             }
         });
-        this.toDispose.push(handle);
-        return handle;
+        this.toDispose.push(toUnwatch);
+        return toUnwatch;
     }
 
     // #endregion

@@ -33,16 +33,10 @@ const debounce = require('lodash.debounce');
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/**
- * @deprecated since 1.6.0
- */
 export interface WatcherOptions {
     ignored: IMinimatch[]
 }
 
-/**
- * @deprecated since 1.6.0 use `NsfwFileSystemWatcherService` instead.
- */
 export class NsfwFileSystemWatcherServer implements FileSystemWatcherServer {
 
     protected client: FileSystemWatcherClient | undefined;
